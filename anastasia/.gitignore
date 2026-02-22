@@ -1,0 +1,28 @@
+# Large TTS model files (too large for GitHub)
+.kokoro-v1.0/model.onnx
+.kokoro-v1.0/voices.bin
+.kokoro-v1.0-original/model.onnx
+.kokoro-v1.0-original/voices.bin
+tools/sherpa-onnx-tts/kokoro-multi-lang-v1_1/model.onnx
+tools/sherpa-onnx-tts/kokoro-multi-lang-v1_1/voices.bin
+tools/tts-models/*.tar.bz2
+tools/tts-models/*.zip
+tools/tts-models/*/*.onnx
+tools/tts-models/*.bz2
+
+# Python virtual environment
+venv/
+__pycache__/
+
+# Node modules
+node_modules/
+
+# Audio files (temporary, not needed for backup)
+*.wav
+
+# Analysis and transcript files (not needed for backup)
+analysis-*.md
+youtube-transcript-*.md
+
+# OpenClaw (excluding internal files)
+.clawhub/
