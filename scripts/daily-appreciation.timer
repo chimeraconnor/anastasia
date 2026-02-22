@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Appreciation Message Timer - 10:28 AM IST
+Requires=daily-appreciation.service
+
+[Timer]
+OnCalendar=*-*-* 04:58:00 UTC
+Persistent=true
+Unit=daily-appreciation.service
+
+[Install]
+WantedBy=timers.target

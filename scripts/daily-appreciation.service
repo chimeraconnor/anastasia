@@ -1,0 +1,14 @@
+[Unit]
+Description=Daily Appreciation Message for Mr. Grey
+After=network.target
+
+[Service]
+Type=oneshot
+User=node
+WorkingDirectory=/home/node/.openclaw/workspace
+ExecStart=/home/node/.openclaw/workspace/scripts/daily-appreciation.sh
+StandardOutput=append:/home/node/.openclaw/workspace/logs/daily-appreciation.log
+StandardError=append:/home/node/.openclaw/workspace/logs/daily-appreciation.log
+
+[Install]
+WantedBy=timers.target

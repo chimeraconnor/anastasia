@@ -1,0 +1,84 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.2.20",
+    "lastTouchedAt": "2026-02-22T17:29:34.678Z"
+  },
+  "wizard": {
+    "lastRunAt": "2026-02-22T17:29:34.657Z",
+    "lastRunVersion": "2026.2.20",
+    "lastRunCommand": "configure",
+    "lastRunMode": "local"
+  },
+  "browser": {
+    "headless": true,
+    "noSandbox": true,
+    "defaultProfile": "openclaw"
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "zai/glm-4.7"
+      },
+      "workspace": "/home/node/.openclaw/workspace"
+    },
+    "list": [
+      {
+        "id": "main",
+        "tools": {
+          "allow": [
+            "sherpa_tts"
+          ]
+        }
+      }
+    ]
+  },
+  "tools": {
+    "web": {
+      "search": {
+        "enabled": true
+      },
+      "fetch": {
+        "enabled": true
+      }
+    },
+    "exec": {
+      "security": "full",
+      "ask": "always"
+    }
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "dmPolicy": "pairing",
+      "botToken": "REDACTED_TELEGRAM_TOKEN",
+      "allowFrom": [
+        8387298410,
+        5447452249
+      ],
+      "groupPolicy": "allowlist",
+      "streamMode": "partial"
+    }
+  },
+  "gateway": {
+    "mode": "local",
+    "controlUi": {
+      "allowInsecureAuth": true
+    }
+  },
+  "plugins": {
+    "enabled": true,
+    "entries": {
+      "telegram": {
+        "enabled": true
+      },
+      "sherpa-tts": {
+        "enabled": true
+      }
+    }
+  }
+}
