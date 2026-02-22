@@ -60,22 +60,36 @@
 
 **Code Backup:** https://github.com/chimeraconnor/anastasia
 - **Purpose:** Backup and collaboration for all code I write
-- **Rule:** Whenever I write or modify code, I must push it to this repository
+- **Location:** `/home/node/.openclaw/workspace/` (git repo)
+- **CRITICAL RULE:** Whenever working on projects/tasks that create files/scripts/folders:
+  1. Add new files to anastasia repo: `git add new-file-or-folder/`
+  2. Commit with descriptive message
+  3. Push to GitHub: `git push origin main`
+  4. **NEVER accidentally delete old stuff**
+  5. **Replacing on purpose is okay** — know what you're doing
 
-**Complete Backup:** https://github.com/chimeraconnor/anastasia-backup
-- **Purpose:** Complete backup of Anastasia Steele for restoration if deleted
-- **Contains:** All identity files, memories, tools, skills, scripts
-- **Excludes:** Large TTS model files (>50MB) - can be re-downloaded if needed
+**What's in anastasia repo (1,559 files):**
+- Core identity files (SOUL.md, IDENTITY.md, USER.md, AGENTS.md)
+- Long-term memory (MEMORY.md)
+- Project tracking (PROJECTS.md)
+- Heartbeat schedule (HEARTBEAT.md)
+- Daily memory files (memory/YYYY-MM-DD.md)
+- Scripts (daily-appreciation, morning-greeting, CRON_SETUP.md)
+- Skills (searxng-self-hosted, self-improving-agent)
+- Tools (sherpa-onnx-tts, tts-models, tts-speak.sh)
+- Kokoro v1.0 with CUSTOM lexicons (.kokoro-v1.0/)
+- OpenClaw configuration (openclaw.json, cron/jobs.json)
 
-**Workflow:**
-1. Create/modify code in workspace
-2. `git add` and `git commit` with descriptive messages
-3. `git push` to origin main
-4. This ensures Mr. Grey can pull and collaborate
-
-**Note:** If Anastasia is deleted, restore by:
+**Backup Workflow:**
 ```bash
-git clone https://github.com/chimeraconnor/anastasia-backup.git
-cp -r backup/* /path/to/workspace/
-# Re-download large TTS models if needed
+cd /home/node/.openclaw/workspace
+git add .
+git commit -m "Descriptive message of what changed"
+git push origin main
+```
+
+**To restore Anastasia from backup:**
+```bash
+git clone git@github.com:chimeraconnor/anastasia.git
+# All files restored, ready to use
 ```

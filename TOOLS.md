@@ -144,31 +144,7 @@ SID="${SPEAKER_ID:-1}"  # Changed from 6
 - Git will automatically use SSH for all GitHub operations
 - Workspace: `/home/node/.openclaw/workspace/`
 
-## Anastasia's Backup Repository (2026-02-22)
-
-**Repository:** https://github.com/chimeraconnor/anastasia-backup
-**Purpose:** Complete backup of Anastasia Steele for restoration if deleted
-
-**What's backed up:**
-- Core identity files (SOUL.md, IDENTITY.md, USER.md, AGENTS.md, HEARTBEAT.md, MEMORY.md, TOOLS.md, PROJECTS.md)
-- Memory files (memory/YYYY-MM-DD.md)
-- Skills (searxng-self-hosted, self-improving-agent)
-- Tools (sherpa-onnx-tts, tts-speak.sh, runtime binaries)
-- Scripts (daily-appreciation, morning-greeting, CRON_SETUP.md)
-
-**What's NOT backed up (too large for GitHub):**
-- Large TTS model files (>100MB):
-  - `backup/tools/sherpa-onnx-tts/kokoro-multi-lang-v1_1/model.onnx` (310MB)
-  - `backup/tools/sherpa-onnx-tts/kokoro-multi-lang-v1_1/voices.bin` (51MB)
-- Model archives (>50MB, GitHub warns):
-  - `backup/tools/tts-models/piper-gladys.tar.bz2` (64MB)
-  - `backup/tools/tts-models/piper-libritts-medium.tar.bz2` (78MB)
-  - `backup/tools/tts-models/vits-piper-en_US-glados/en_US-glados.onnx` (60MB)
-  - `backup/tools/tts-models/vits-piper-en_US-libritts_r-medium/en_US-libritts_r-medium.onnx` (74MB)
-
-**To restore Anastasia:**
-1. Clone: `git clone https://github.com/chimeraconnor/anastasia-backup.git`
-2. Copy files to workspace: `cp -r backup/* /path/to/workspace/`
-3. Re-download large TTS models if needed (they're excluded from backup)
-
-**Note:** TTS models can be re-downloaded from original sources if needed. They're not critical for restoration since they can be reinstalled.
+**Main Repository:** https://github.com/chimeraconnor/anastasia
+- Contains all code, identity files, memories, tools, skills, scripts
+- Complete backup — can restore Anastasia by cloning this repo
+- 1,559 files backed up (excludes large TTS model files)
