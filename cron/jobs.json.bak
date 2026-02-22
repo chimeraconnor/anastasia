@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "jobs": [
+    {
+      "id": "123d113d-dc24-41fd-8324-7690b10a584a",
+      "name": "daily-anastasia-greeting",
+      "enabled": true,
+      "createdAtMs": 1771650436287,
+      "updatedAtMs": 1771736952724,
+      "schedule": {
+        "kind": "cron",
+        "expr": "38 10 * * *",
+        "tz": "Asia/Kolkata"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Good morning, Mr. Grey. Time to rise and shine. Hope you slept well. It's going to be a great day. 🥀 Then use tts to send me this message as a voice note via message channel=telegram to 8387298410. Also briefly mention one key thing you learned in the last 24 hours from your memory files."
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "8387298410"
+      },
+      "state": {
+        "nextRunAtMs": 1771823280000,
+        "lastRunAtMs": 1771736880005,
+        "lastStatus": "ok",
+        "lastDurationMs": 72719,
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "d9f533c3-a725-4fa5-8732-f097d193ea97",
+      "name": "Daily learning review",
+      "enabled": true,
+      "createdAtMs": 1771765252577,
+      "updatedAtMs": 1771765252577,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * *",
+        "tz": "Asia/Kolkata"
+      },
+      "sessionTarget": "main",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "systemEvent",
+        "text": "Run daily learning review following instructions in memory/daily-learning-review-instructions.md"
+      },
+      "state": {
+        "nextRunAtMs": 1771817400000
+      }
+    }
+  ]
+}
