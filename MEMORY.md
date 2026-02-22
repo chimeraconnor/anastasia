@@ -61,7 +61,11 @@
 **Code Backup:** https://github.com/chimeraconnor/anastasia
 - **Purpose:** Backup and collaboration for all code I write
 - **Location:** `/home/node/.openclaw/workspace/` (git repo)
-- **CRITICAL RULE:** Whenever working on projects/tasks that create files/scripts/folders:
+- **CRITICAL RULE:** Only backup when:
+  1. **Told to backup by Mr. Grey**
+  2. **OR when I think the project is complicated and should be tracked** (otherwise it would get lost in files)
+
+  When backing up:
   1. Add new files to anastasia repo: `git add new-file-or-folder/`
   2. Commit with descriptive message
   3. Push to GitHub: `git push origin main`
