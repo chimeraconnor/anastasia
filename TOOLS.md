@@ -49,9 +49,52 @@ curl "$SEARXNG_URL/search?q=query&categories=images&format=json"
 curl "$SEARXNG_URL/search?q=query&language=en-US&format=json"
 ```
 
+## Research Workflow (2026-02-24)
+**Rule from Mr. Grey:** When asked about something new:
+1. Use my own general knowledge first
+2. Then research using SearXNG to verify/enhance
+3. SearXNG is free to use — no quota concerns
+
+**Implementation:** Use the `web_search` tool with the SearXNG option, or call the searxng skill directly.
+
 ## Telegram
 
 - **Mr. Grey's ID:** 8387298410
+
+## Discord
+
+- **User ID:** 1262353633089949718
+- **Server ID:** 1475190771727597792
+- **Token:** Configured in OpenClaw config
+- **Status:** Enabled
+
+### Discord Voice Messages (Custom Skill)
+
+**Location:** `~/.openclaw/workspace/skills/discord-voice/`
+
+Sends audio files as native Discord voice messages with waveform visualization (works around broken OpenClaw native `asVoice` support).
+
+**Usage:**
+```bash
+# Via exec tool
+python3 ~/.openclaw/workspace/skills/discord-voice/scripts/send_voice.py \
+  --channel-id 1475190772830568682 \
+  --audio-file /path/to/audio.wav \
+  --verbose
+```
+
+**Requirements:**
+- `python3`, `ffmpeg`, `ffprobe` (all installed)
+- `DISCORD_BOT_TOKEN` env var or `--token` flag
+
+**Features:**
+- Auto-converts any audio format to OGG/Opus
+- Generates waveform visualization from audio
+- Detailed error messages per step (conversion, upload, send)
+- Cleans up temp files automatically
+- Returns JSON with message_id on success
+
+**Note:** Native OpenClaw `asVoice` is broken (Issue #16103). This skill provides a working alternative.
 
 ## Docker/VPS Setup Note (2026-02-22)
 
@@ -75,7 +118,7 @@ curl "$SEARXNG_URL/search?q=query&language=en-US&format=json"
 
 | Model | Path | Speakers | Languages | Active |
 |-------|------|-----------|----------|--------|
-| **Kokoro v1.0** ⭐ | `/home/node/kokoro-tts-standalone/models/kokoro-multi-lang-v1_0/` | 55 (0-54) | EN + ZH | Yes |
+| **Kokoro v1.0** ⭐ | `/home/node/.openclaw/workspace/.kokoro-v1.0/` | 55 (0-54) | EN + ZH | Yes |
 | Piper VITS | `~/.openclaw/tools/sherpa-onnx-tts/tts-models/vits-piper-en_US-gladys/` | 1 | EN | No |
 | LibriTTS | `~/.openclaw/tools/sherpa-onnx-tts/tts-models/vits-piper-en_US-libritts_r-medium/` | 904 | EN | No |
 
@@ -121,8 +164,11 @@ SID="${SPEAKER_ID:-1}"  # Changed from 6
 ```
 
 ### Notes
+- **Preferred:** use the `sherpa_tts` tool directly — it routes through `tts-speak.sh` automatically
+- **Fallback (shell/subagent):** call `tts-speak.sh` directly — never call `sherpa-onnx-offline-tts` binary directly
+- Direct binary calls skip all preprocessing → unnatural pauses, spoken punctuation, broken contractions
+- Preprocessing lives in `~/.openclaw/tools/tts-preprocess.py` (pure Python stdlib, no deps)
 - Kokoro v1.1 was downloaded but not configured (wrapper uses v1.0)
-- sherpa-onnx-tts skill wrapper has ESM issues → using direct binary calls
 - Out-of-vocabulary words are skipped with warning
 
 ## Anastasia's GitHub Account (2026-02-22)
