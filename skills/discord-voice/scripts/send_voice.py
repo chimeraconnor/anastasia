@@ -32,6 +32,48 @@ class DiscordVoiceError(Exception):
         super().__init__(f"[{step}] {message}")
 
 
+def get_token_from_openclaw_config() -> Optional[str]:
+    """
+    Read Discord bot token from OpenClaw config file.
+    Checks multiple possible config locations and structures.
+    """
+    config_paths = [
+        Path.home() / ".openclaw" / "openclaw.json",
+        Path("/root/.openclaw/openclaw.json"),  # Docker container path
+        Path("/home/node/.openclaw/openclaw.json"),  # Alternative container path
+    ]
+    
+    for config_path in config_paths:
+        if not config_path.exists():
+            continue
+            
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+            
+            # Try to get token from channels.discord.token
+            token = config.get("channels", {}).get("discord", {}).get("token")
+            if token and token != "__OPENCLAW_REDACTED__":
+                return token
+                
+            # Try accounts structure
+            accounts = config.get("channels", {}).get("discord", {}).get("accounts", {})
+            for account_id, account_config in accounts.items():
+                token = account_config.get("token")
+                if token and token != "__OPENCLAW_REDACTED__":
+                    return token
+            
+            # Try skills.discord-voice.env.DISCORD_BOT_TOKEN
+            skills_token = config.get("skills", {}).get("entries", {}).get("discord-voice", {}).get("env", {}).get("DISCORD_BOT_TOKEN")
+            if skills_token and skills_token != "__OPENCLAW_REDACTED__":
+                return skills_token
+                    
+        except (json.JSONDecodeError, IOError, OSError):
+            continue
+    
+    return None
+
+
 def run_command(cmd: list, description: str, verbose: bool = False) -> Tuple[int, str, str]:
     """Run a shell command and return (returncode, stdout, stderr)."""
     if verbose:
@@ -244,7 +286,8 @@ def get_upload_url(channel_id: str, token: str, file_size: int, verbose: bool = 
     
     headers = {
         "Authorization": f"Bot {token}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "User-Agent": "DiscordBot (https://github.com/chimeraconnor/anastasia, 1.0)"
     }
     
     payload = {
@@ -370,7 +413,8 @@ def send_voice_message(
     
     headers = {
         "Authorization": f"Bot {token}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "User-Agent": "DiscordBot (https://github.com/chimeraconnor/anastasia, 1.0)"
     }
     
     payload = {
@@ -447,10 +491,15 @@ def main():
     
     args = parser.parse_args()
     
-    # Get token
+    # Get token - try args, env var, then OpenClaw config
     token = args.token or os.environ.get("DISCORD_BOT_TOKEN")
     if not token:
-        print("Error: Discord bot token required. Use --token or set DISCORD_BOT_TOKEN env var.", file=sys.stderr)
+        token = get_token_from_openclaw_config()
+        if token and args.verbose:
+            print("Token loaded from OpenClaw config", file=sys.stderr)
+    
+    if not token:
+        print("Error: Discord bot token required. Use --token, set DISCORD_BOT_TOKEN env var, or ensure channels.discord.token is configured in OpenClaw.", file=sys.stderr)
         sys.exit(1)
     
     # Validate input file
