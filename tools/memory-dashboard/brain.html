@@ -50,6 +50,22 @@
   .stat-val { font-size: 20px; font-weight: 800; color: #e0e0ff; }
   .stat-lbl { font-size: 10px; color: var(--dim); margin-top: 1px; }
 
+  /* History (date picker) */
+  .history-nav { display: flex; align-items: center; gap: 6px; }
+  .history-btn { background: var(--panel); border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 10px; color: var(--text); cursor: pointer;
+    font-size: 14px; line-height: 1; transition: all 0.15s; }
+  .history-btn:hover { border-color: var(--accent); background: rgba(123,127,255,0.1); }
+  .history-btn:disabled { opacity: 0.25; cursor: default; }
+  .history-btn:disabled:hover { border-color: var(--border); background: var(--panel); }
+  .history-date { flex: 1; text-align: center; font-size: 13px;
+    font-weight: 600; color: #e0e0ff; }
+  .history-count { text-align: center; font-size: 10px; color: var(--dim);
+    margin-top: 4px; }
+  .history-latest { display: inline-block; background: var(--accent);
+    color: #000; border-radius: 3px; padding: 1px 5px; font-size: 9px;
+    font-weight: 700; margin-left: 6px; vertical-align: middle; }
+
   /* Search */
   #search { width: 100%; padding: 8px 10px; background: var(--panel);
     border: 1px solid var(--border); border-radius: 6px; color: var(--text);
@@ -124,6 +140,15 @@
     padding: 2px 0; }
   .leg-dot { width: 10px; height: 10px; border-radius: 50%; }
 
+  /* Transition overlay */
+  #transition-overlay {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(8,8,15,0.6); z-index: 3;
+    pointer-events: none; opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  #transition-overlay.active { opacity: 1; }
+
   /* scrollbars */
   #sidebar-body::-webkit-scrollbar, .cluster-list::-webkit-scrollbar { width: 4px; }
   #sidebar-body::-webkit-scrollbar-thumb, .cluster-list::-webkit-scrollbar-thumb {
@@ -140,7 +165,7 @@
         <span class="brand-icon">🧠</span>
         <div>
           <div class="brand-name">Ana's Brain</div>
-          <div class="brand-sub">OpenClaw QMD Knowledge Space</div>
+          <div class="brand-sub">OpenClaw Knowledge Space</div>
         </div>
       </div>
     </div>
@@ -150,11 +175,22 @@
       <div>
         <div class="section-label">Overview</div>
         <div class="stats">
-          <div class="stat"><div class="stat-val" id="s-chunks">—</div><div class="stat-lbl">Chunks</div></div>
+          <div class="stat"><div class="stat-val" id="s-nodes">—</div><div class="stat-lbl">Nodes</div></div>
           <div class="stat"><div class="stat-val" id="s-clusters">—</div><div class="stat-lbl">Clusters</div></div>
           <div class="stat"><div class="stat-val" id="s-edges">—</div><div class="stat-lbl">Edges</div></div>
           <div class="stat"><div class="stat-val" id="s-docs">—</div><div class="stat-lbl">Documents</div></div>
         </div>
+      </div>
+
+      <!-- History / timeline -->
+      <div id="history-section">
+        <div class="section-label">Timeline</div>
+        <div class="history-nav">
+          <button class="history-btn" id="hist-prev" title="Previous snapshot">&#9664;</button>
+          <span class="history-date" id="hist-date">latest</span>
+          <button class="history-btn" id="hist-next" title="Next snapshot">&#9654;</button>
+        </div>
+        <div class="history-count" id="hist-count"></div>
       </div>
 
       <!-- Search -->
@@ -169,12 +205,18 @@
         <label class="filter-row"><input type="checkbox" data-src="lesson" checked>
           <span class="fdot" style="background:#FF6B6B"></span>
           <span class="flbl">Lessons</span><span class="fcnt" id="fc-lesson">0</span></label>
+        <label class="filter-row"><input type="checkbox" data-src="identity" checked>
+          <span class="fdot" style="background:#DDA0DD"></span>
+          <span class="flbl">Identity</span><span class="fcnt" id="fc-identity">0</span></label>
+        <label class="filter-row"><input type="checkbox" data-src="knowledge" checked>
+          <span class="fdot" style="background:#96CEB4"></span>
+          <span class="flbl">Knowledge</span><span class="fcnt" id="fc-knowledge">0</span></label>
+        <label class="filter-row"><input type="checkbox" data-src="skill" checked>
+          <span class="fdot" style="background:#FFEAA7"></span>
+          <span class="flbl">Skills</span><span class="fcnt" id="fc-skill">0</span></label>
         <label class="filter-row"><input type="checkbox" data-src="daily" checked>
           <span class="fdot" style="background:#45B7D1"></span>
           <span class="flbl">Daily Notes</span><span class="fcnt" id="fc-daily">0</span></label>
-        <label class="filter-row"><input type="checkbox" data-src="instruction" checked>
-          <span class="fdot" style="background:#96CEB4"></span>
-          <span class="flbl">Instructions</span><span class="fcnt" id="fc-instruction">0</span></label>
         <label class="filter-row"><input type="checkbox" data-src="session" checked>
           <span class="fdot" style="background:#9B8EC7"></span>
           <span class="flbl">Sessions</span><span class="fcnt" id="fc-session">0</span></label>
@@ -206,14 +248,18 @@
 
   <!-- ── 3D View ── -->
   <div id="brain">
+    <div id="transition-overlay"></div>
     <div id="controls">
-      <button class="ctrl-btn" id="btn-reset" title="Reset camera">⟲ Reset</button>
-      <button class="ctrl-btn" id="btn-auto" title="Toggle auto-rotate">↻ Rotate</button>
+      <button class="ctrl-btn" id="btn-reset" title="Reset camera">&#x27F2; Reset</button>
+      <button class="ctrl-btn" id="btn-auto" title="Toggle auto-rotate">&#x21BB; Rotate</button>
     </div>
     <div id="legend">
-      <div class="section-label">Node Size</div>
-      <div class="leg-row"><span class="leg-dot" style="background:#FF6B6B;width:12px;height:12px"></span> Lesson</div>
-      <div class="leg-row"><span class="leg-dot" style="background:#45B7D1;width:8px;height:8px"></span> Daily / Instruction</div>
+      <div class="section-label">Source Types</div>
+      <div class="leg-row"><span class="leg-dot" style="background:#FF6B6B;width:14px;height:14px"></span> Lesson</div>
+      <div class="leg-row"><span class="leg-dot" style="background:#DDA0DD;width:12px;height:12px"></span> Identity</div>
+      <div class="leg-row"><span class="leg-dot" style="background:#96CEB4;width:10px;height:10px"></span> Knowledge</div>
+      <div class="leg-row"><span class="leg-dot" style="background:#FFEAA7;width:8px;height:8px"></span> Skill</div>
+      <div class="leg-row"><span class="leg-dot" style="background:#45B7D1;width:8px;height:8px"></span> Daily</div>
       <div class="leg-row"><span class="leg-dot" style="background:#9B8EC7;width:5px;height:5px"></span> Session</div>
     </div>
   </div>
@@ -226,13 +272,19 @@
 <script>
 // ─── Constants ───────────────────────────────────────────────────────────────
 const SRC_COLOR = {
-  lesson: '#FF6B6B', daily: '#45B7D1', instruction: '#96CEB4', session: '#9B8EC7'
+  lesson: '#FF6B6B', identity: '#DDA0DD', knowledge: '#96CEB4',
+  skill: '#FFEAA7', daily: '#45B7D1', session: '#9B8EC7'
 };
-// nodeVal controls sphere volume — keep these SMALL (val = radius^3 proportional)
-const SRC_SIZE = { lesson: 3.5, daily: 1.5, instruction: 1.5, session: 0.6 };
-const SRC_LABEL = { lesson: 'Lesson', daily: 'Daily', instruction: 'Instruction', session: 'Session' };
+const SRC_SIZE = {
+  lesson: 3.5, identity: 3.0, knowledge: 2.0,
+  skill: 1.5, daily: 1.5, session: 0.6
+};
+const SRC_LABEL = {
+  lesson: 'Lesson', identity: 'Identity', knowledge: 'Knowledge',
+  skill: 'Skill', daily: 'Daily', session: 'Session'
+};
 
-// 36 distinct cluster colors (enough for most datasets)
+// 36 distinct cluster colors
 const PALETTE = [
   '#FF6B6B','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#F0E68C',
   '#20B2AA','#FF7F50','#87CEEB','#DA70D6','#32CD32','#FF69B4',
@@ -247,37 +299,165 @@ let graph = null;
 let focusedCluster = null;
 let autoRotate = false;
 let searchQuery = '';
-let srcFilter = { lesson: true, daily: true, instruction: true, session: true };
-let clusterMap = {};  // id -> cluster info
+let srcFilter = {};
+Object.keys(SRC_COLOR).forEach(k => { srcFilter[k] = true; });
+
+let clusterMap = {};
+let snapshots = [];      // sorted date strings
+let currentSnapIdx = -1;
+let transitioning = false;
 
 // ─── Load data ───────────────────────────────────────────────────────────────
 async function init() {
-  const resp = await fetch('graph_data.json');
-  DATA = await resp.json();
+  DATA = await (await fetch('graph_data.json')).json();
 
-  // Build cluster lookup
-  DATA.clusters.forEach(c => { clusterMap[c.id] = c; });
+  // Build snapshot timeline
+  snapshots = (DATA.available_snapshots || []).sort();
+  currentSnapIdx = snapshots.length - 1;
+  updateHistoryUI();
+
+  loadDataIntoUI(DATA);
+  buildGraph(DATA);
+}
+
+function loadDataIntoUI(data) {
+  clusterMap = {};
+  data.clusters.forEach(c => { clusterMap[c.id] = c; });
 
   // Stats
-  document.getElementById('s-chunks').textContent = DATA.stats.total_chunks;
-  document.getElementById('s-clusters').textContent = DATA.stats.clusters;
-  document.getElementById('s-edges').textContent = DATA.stats.edges;
-  // Count unique documents
-  const docs = new Set(DATA.nodes.map(n => n.path));
+  document.getElementById('s-nodes').textContent = data.stats.total_nodes;
+  document.getElementById('s-clusters').textContent = data.stats.clusters;
+  document.getElementById('s-edges').textContent = data.stats.edges;
+  const docs = new Set(data.nodes.map(n => n.path));
   document.getElementById('s-docs').textContent = docs.size;
-  document.getElementById('gen-ts').textContent = 'Generated ' + DATA.generated.slice(0, 16).replace('T', ' ');
+  document.getElementById('gen-ts').textContent = 'Generated ' + data.generated.slice(0, 16).replace('T', ' ');
 
   // Source counts
   const srcCounts = {};
-  DATA.nodes.forEach(n => { srcCounts[n.source_type] = (srcCounts[n.source_type]||0) + 1; });
-  Object.keys(srcCounts).forEach(k => {
+  data.nodes.forEach(n => { srcCounts[n.source_type] = (srcCounts[n.source_type]||0) + 1; });
+  Object.keys(SRC_COLOR).forEach(k => {
     const el = document.getElementById('fc-' + k);
-    if (el) el.textContent = srcCounts[k];
+    if (el) el.textContent = srcCounts[k] || 0;
   });
 
-  buildClusterList();
-  buildGraph();
+  buildClusterList(data);
 }
+
+// ─── History / Timeline ──────────────────────────────────────────────────────
+function updateHistoryUI() {
+  const dateEl = document.getElementById('hist-date');
+  const countEl = document.getElementById('hist-count');
+  const prevBtn = document.getElementById('hist-prev');
+  const nextBtn = document.getElementById('hist-next');
+
+  if (snapshots.length <= 1) {
+    dateEl.innerHTML = snapshots[0] || 'today';
+    countEl.textContent = snapshots.length + ' snapshot';
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
+    return;
+  }
+
+  const isLatest = currentSnapIdx === snapshots.length - 1;
+  const date = snapshots[currentSnapIdx] || 'latest';
+  dateEl.innerHTML = date + (isLatest ? '<span class="history-latest">LATEST</span>' : '');
+  countEl.textContent = (currentSnapIdx + 1) + ' of ' + snapshots.length + ' snapshots';
+  prevBtn.disabled = currentSnapIdx <= 0;
+  nextBtn.disabled = isLatest;
+}
+
+async function loadSnapshot(idx) {
+  if (idx < 0 || idx >= snapshots.length || transitioning) return;
+
+  const date = snapshots[idx];
+  const oldData = DATA;
+  transitioning = true;
+
+  // Show transition overlay
+  const overlay = document.getElementById('transition-overlay');
+  overlay.classList.add('active');
+
+  try {
+    // Fetch snapshot — latest is graph_data.json, older ones are in snapshots/
+    const url = idx === snapshots.length - 1
+      ? 'graph_data.json'
+      : 'snapshots/' + date + '.json';
+    const newData = await (await fetch(url)).json();
+
+    currentSnapIdx = idx;
+    updateHistoryUI();
+
+    // Wait for overlay fade-in
+    await sleep(250);
+
+    // Identify entering / exiting nodes
+    const oldIds = new Set((oldData ? oldData.nodes : []).map(n => n.id));
+    const newIds = new Set(newData.nodes.map(n => n.id));
+    const enterIds = new Set([...newIds].filter(id => !oldIds.has(id)));
+
+    // Update data + UI
+    DATA = newData;
+    loadDataIntoUI(newData);
+
+    // Rebuild graph data — entering nodes start tiny for pop-in
+    const gData = {
+      nodes: newData.nodes.map(n => ({
+        ...n,
+        fx: n.x, fy: n.y, fz: n.z,
+        _scale: enterIds.has(n.id) ? 0.01 : 1,
+      })),
+      links: newData.edges.map(e => ({ source: e.source, target: e.target }))
+    };
+
+    graph.graphData(gData);
+
+    // Remove overlay
+    overlay.classList.remove('active');
+    await sleep(50);
+
+    // Animate new nodes popping in
+    if (enterIds.size > 0) {
+      animatePopIn(gData.nodes.filter(n => enterIds.has(n.id)));
+    }
+
+  } catch (err) {
+    console.error('Failed to load snapshot:', err);
+    overlay.classList.remove('active');
+  }
+
+  transitioning = false;
+}
+
+function animatePopIn(nodes) {
+  const DURATION = 400;
+  const start = performance.now();
+
+  function tick(now) {
+    const t = Math.min(1, (now - start) / DURATION);
+    // Overshoot ease-out for a "pop" feel
+    const ease = t < 0.7
+      ? (t / 0.7) * 1.12
+      : 1.12 - 0.12 * ((t - 0.7) / 0.3);
+    const scale = Math.max(0.01, ease);
+
+    nodes.forEach(n => { n._scale = scale; });
+    // Trigger nodeVal re-evaluation
+    graph.nodeVal(graph.nodeVal());
+
+    if (t < 1) requestAnimationFrame(tick);
+    else nodes.forEach(n => { n._scale = 1; });
+  }
+  requestAnimationFrame(tick);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+document.getElementById('hist-prev').addEventListener('click', () => {
+  loadSnapshot(currentSnapIdx - 1);
+});
+document.getElementById('hist-next').addEventListener('click', () => {
+  loadSnapshot(currentSnapIdx + 1);
+});
 
 // ─── Cluster list ────────────────────────────────────────────────────────────
 function clusterColor(cid) {
@@ -285,10 +465,11 @@ function clusterColor(cid) {
   return PALETTE[cid % PALETTE.length];
 }
 
-function buildClusterList() {
+function buildClusterList(data) {
   const el = document.getElementById('cluster-list');
   el.innerHTML = '';
-  const sorted = [...DATA.clusters].sort((a,b) => {
+  focusedCluster = null;
+  const sorted = [...data.clusters].sort((a,b) => {
     if (a.id === -1) return 1;
     if (b.id === -1) return -1;
     return b.count - a.count;
@@ -297,9 +478,9 @@ function buildClusterList() {
     const div = document.createElement('div');
     div.className = 'cluster-item';
     div.dataset.cid = c.id;
-    div.innerHTML = `<span class="cdot" style="background:${clusterColor(c.id)}"></span>
-      <span class="clbl">${esc(c.label)}</span>
-      <span class="ccnt">${c.count}</span>`;
+    div.innerHTML = '<span class="cdot" style="background:' + clusterColor(c.id) + '"></span>'
+      + '<span class="clbl">' + esc(c.label) + '</span>'
+      + '<span class="ccnt">' + c.count + '</span>';
     div.addEventListener('click', () => toggleClusterFocus(c.id, div));
     el.appendChild(div);
   });
@@ -318,22 +499,21 @@ function toggleClusterFocus(cid, el) {
 }
 
 // ─── 3D Graph ────────────────────────────────────────────────────────────────
-function buildGraph() {
+function buildGraph(data) {
   const container = document.getElementById('brain');
 
   graph = ForceGraph3D()(container)
     .backgroundColor('#08080f')
     .showNavInfo(false)
-    // Disable all forces — we use pre-computed UMAP positions
+    // Disable forces — positions from UMAP
     .d3Force('charge', null)
     .d3Force('link', null)
     .d3Force('center', null)
     .warmupTicks(0)
     .cooldownTicks(0)
-    // Disable node dragging — positions are fixed from UMAP
     .enableNodeDrag(false)
-    // Nodes
-    .nodeVal(n => SRC_SIZE[n.source_type] || 1)
+    // Nodes: size = source type base size * per-node scale (for animation)
+    .nodeVal(n => (SRC_SIZE[n.source_type] || 1) * (n._scale || 1))
     .nodeColor(n => nodeColor(n))
     .nodeOpacity(0.88)
     .nodeResolution(16)
@@ -346,35 +526,37 @@ function buildGraph() {
     .onNodeHover(n => {
       container.style.cursor = n ? 'pointer' : 'default';
     })
-    // Tooltip on hover
+    // Tooltip
     .nodeLabel(n => {
       const summary = n.summary || n.title;
       const clr = clusterColor(n.cluster);
-      const cname = clusterMap[n.cluster]?.label || 'unclustered';
-      return `<div style="background:rgba(10,10,20,0.94);padding:6px 10px;border-radius:6px;
-        font-size:11px;color:#d0d0e8;max-width:300px;border:1px solid ${clr}40;
-        line-height:1.5">
-        <div style="color:${clr};font-size:10px;font-weight:600;margin-bottom:3px">${esc(cname)}</div>
-        <div>${esc(summary.slice(0,120))}</div>
-        <div style="color:#666;font-size:10px;margin-top:4px">${n.date} · ${SRC_LABEL[n.source_type] || n.source_type}</div>
-      </div>`;
+      const cname = clusterMap[n.cluster] ? clusterMap[n.cluster].label : 'unclustered';
+      const srcClr = SRC_COLOR[n.source_type] || '#888';
+      return '<div style="background:rgba(10,10,20,0.94);padding:6px 10px;border-radius:6px;'
+        + 'font-size:11px;color:#d0d0e8;max-width:300px;border:1px solid ' + clr + '40;'
+        + 'line-height:1.5">'
+        + '<div style="color:' + clr + ';font-size:10px;font-weight:600;margin-bottom:3px">' + esc(cname) + '</div>'
+        + '<div>' + esc(summary.slice(0,120)) + '</div>'
+        + '<div style="color:#666;font-size:10px;margin-top:4px">'
+        + '<span style="color:' + srcClr + '">' + (SRC_LABEL[n.source_type] || n.source_type) + '</span>'
+        + ' &middot; ' + (n.date || '')
+        + '</div></div>';
     });
 
-  // Set data with fixed positions from UMAP
-  const gData = {
-    nodes: DATA.nodes.map(n => ({
+  // Set data with fixed UMAP positions
+  var gData = {
+    nodes: data.nodes.map(n => ({
       ...n,
       fx: n.x, fy: n.y, fz: n.z,
+      _scale: 1,
     })),
-    links: DATA.edges.map(e => ({
-      source: e.source, target: e.target,
-    }))
+    links: data.edges.map(e => ({ source: e.source, target: e.target }))
   };
 
   graph.graphData(gData);
 
-  // Position camera to see the full spread
-  setTimeout(() => {
+  // Camera
+  setTimeout(function() {
     graph.cameraPosition({ x: 180, y: 120, z: 180 }, { x: 0, y: 0, z: 0 }, 1200);
   }, 100);
 }
@@ -382,9 +564,9 @@ function buildGraph() {
 function nodeColor(n) {
   // Search filtering
   if (searchQuery) {
-    const match = (n.summary || '').toLowerCase().includes(searchQuery) ||
+    var match = (n.summary || '').toLowerCase().includes(searchQuery) ||
                   n.title.toLowerCase().includes(searchQuery) ||
-                  n.text.toLowerCase().includes(searchQuery);
+                  (n.text || '').toLowerCase().includes(searchQuery);
     if (!match) return 'rgba(30,30,50,0.15)';
   }
   // Cluster focus
@@ -393,6 +575,11 @@ function nodeColor(n) {
   }
   // Source filter
   if (!srcFilter[n.source_type]) return 'rgba(30,30,50,0.08)';
+
+  // Nodes still scaling in glow with their source color
+  if (n._scale != null && n._scale < 0.8) {
+    return SRC_COLOR[n.source_type] || '#888';
+  }
 
   // Color by cluster
   return clusterColor(n.cluster);
@@ -405,7 +592,7 @@ function updateVisibility() {
 }
 
 // ─── Controls ────────────────────────────────────────────────────────────────
-document.getElementById('btn-reset').addEventListener('click', () => {
+document.getElementById('btn-reset').addEventListener('click', function() {
   graph.cameraPosition({ x: 180, y: 120, z: 180 }, { x: 0, y: 0, z: 0 }, 800);
 });
 
@@ -415,11 +602,11 @@ document.getElementById('btn-auto').addEventListener('click', function() {
   if (autoRotate) startAutoRotate();
 });
 
-let rotAngle = 0;
+var rotAngle = 0;
 function startAutoRotate() {
   if (!autoRotate) return;
   rotAngle += 0.003;
-  const dist = 220;
+  var dist = 220;
   graph.cameraPosition({
     x: dist * Math.cos(rotAngle),
     y: 80 + 40 * Math.sin(rotAngle * 0.3),
@@ -429,18 +616,18 @@ function startAutoRotate() {
 }
 
 // ─── Search ──────────────────────────────────────────────────────────────────
-let searchTimer;
-document.getElementById('search').addEventListener('input', e => {
+var searchTimer;
+document.getElementById('search').addEventListener('input', function(e) {
   clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => {
+  searchTimer = setTimeout(function() {
     searchQuery = e.target.value.trim().toLowerCase();
     updateVisibility();
   }, 200);
 });
 
 // ─── Source filters ──────────────────────────────────────────────────────────
-document.querySelectorAll('.filter-row input').forEach(cb => {
-  cb.addEventListener('change', () => {
+document.querySelectorAll('.filter-row input').forEach(function(cb) {
+  cb.addEventListener('change', function() {
     srcFilter[cb.dataset.src] = cb.checked;
     updateVisibility();
   });
@@ -448,26 +635,26 @@ document.querySelectorAll('.filter-row input').forEach(cb => {
 
 // ─── Inspector ───────────────────────────────────────────────────────────────
 function showInspector(n) {
-  const panel = document.getElementById('inspector');
-  const clr = SRC_COLOR[n.source_type] || '#888';
-  const cclr = clusterColor(n.cluster);
-  const cname = clusterMap[n.cluster]?.label || 'unclustered';
+  var panel = document.getElementById('inspector');
+  var srcClr = SRC_COLOR[n.source_type] || '#888';
+  var cclr = clusterColor(n.cluster);
+  var cname = clusterMap[n.cluster] ? clusterMap[n.cluster].label : 'unclustered';
 
-  const badge = document.getElementById('insp-badge');
+  var badge = document.getElementById('insp-badge');
   badge.textContent = SRC_LABEL[n.source_type] || n.source_type;
-  badge.style.background = clr + '22';
-  badge.style.color = clr;
+  badge.style.background = srcClr + '22';
+  badge.style.color = srcClr;
 
   document.getElementById('insp-cdot').style.background = cclr;
   document.getElementById('insp-cname').textContent = cname;
   document.getElementById('insp-summary').textContent = n.summary || n.title;
   document.getElementById('insp-file').textContent = '\u{1F4C1} ' + n.path;
-  document.getElementById('insp-date').textContent = '\u{1F4C5} ' + n.date;
+  document.getElementById('insp-date').textContent = '\u{1F4C5} ' + (n.date || 'n/a');
   document.getElementById('insp-text').textContent = n.text || '(no content)';
   panel.classList.add('open');
 }
 
-document.getElementById('insp-close').addEventListener('click', () => {
+document.getElementById('insp-close').addEventListener('click', function() {
   document.getElementById('inspector').classList.remove('open');
 });
 
