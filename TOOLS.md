@@ -68,33 +68,51 @@ curl "$SEARXNG_URL/search?q=query&language=en-US&format=json"
 - **Token:** Configured in OpenClaw config
 - **Status:** Enabled
 
-### Discord Voice Messages (Custom Skill)
+### Discord Voice Messages (Custom Skill) — **USE THIS, NOT native `asVoice`**
+
+**⚠️ PRECEDENCE:** Always use this skill instead of the native `message(asVoice=true)` parameter. The native implementation is broken (Issue #16103).
 
 **Location:** `~/.openclaw/workspace/skills/discord-voice/`
 
-Sends audio files as native Discord voice messages with waveform visualization (works around broken OpenClaw native `asVoice` support).
+Sends audio files as native Discord voice messages with waveform visualization. Implements the full Discord voice message protocol directly.
 
-**Usage:**
+**Usage (Preferred Method):**
 ```bash
-# Via exec tool
 python3 ~/.openclaw/workspace/skills/discord-voice/scripts/send_voice.py \
   --channel-id 1475190772830568682 \
   --audio-file /path/to/audio.wav \
   --verbose
 ```
 
+**Integration with TTS:**
+```bash
+# Generate voice with TTS, then send as Discord voice message
+~/.openclaw/tools/tts-speak.sh "Your message here" /tmp/audio.wav kokoro 1
+python3 ~/.openclaw/workspace/skills/discord-voice/scripts/send_voice.py \
+  --channel-id 1475566112019058758 \
+  --audio-file /tmp/audio.wav
+```
+
 **Requirements:**
-- `python3`, `ffmpeg`, `ffprobe` (all installed)
-- `DISCORD_BOT_TOKEN` env var or `--token` flag
+- `python3`, `ffmpeg`, `ffprobe` (all installed on host)
+- Discord bot token (auto-read from OpenClaw config)
 
 **Features:**
-- Auto-converts any audio format to OGG/Opus
-- Generates waveform visualization from audio
-- Detailed error messages per step (conversion, upload, send)
-- Cleans up temp files automatically
-- Returns JSON with message_id on success
+- ✅ Auto-converts any audio format to OGG/Opus
+- ✅ Generates 256-sample waveform from audio amplitude
+- ✅ Detailed error messages per step (conversion, upload, send)
+- ✅ 3-step Discord API flow (upload URL → CDN upload → voice message send)
+- ✅ Returns JSON with message_id on success
 
-**Note:** Native OpenClaw `asVoice` is broken (Issue #16103). This skill provides a working alternative.
+**Why not native `asVoice`?**
+- Native `message(action="send", asVoice=true, ...)` returns generic "Error" even when it works
+- This skill gives proper error messages and reliable success confirmation
+- Implements Discord's voice message protocol directly via Python
+
+**Protocol Details:**
+1. `POST /channels/{id}/attachments` — get pre-signed upload URL
+2. `PUT {upload_url}` — upload OGG/Opus to Discord's CDN  
+3. `POST /channels/{id}/messages` — send with `flags: 8192` (IS_VOICE_MESSAGE), duration, and base64 waveform
 
 ### Voice-Call Plugin (Phone Calls)
 

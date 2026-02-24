@@ -1,6 +1,6 @@
 ---
 name: discord-voice
-description: Send audio files as native Discord voice messages (circular audio player with waveform visualization).
+description: Send audio files as native Discord voice messages (circular audio player with waveform visualization). **Use this instead of native asVoice — it actually works.**
 metadata:
   {
     "openclaw":
@@ -28,9 +28,15 @@ metadata:
   }
 ---
 
-# Discord Voice Messages
+# Discord Voice Messages — **RECOMMENDED over native `asVoice`**
 
 Send any audio file as a native Discord voice message with waveform visualization.
+
+## ⚠️ Important: Use This, Not Native `asVoice`
+
+**OpenClaw's native `message(asVoice=true)` is broken (Issue #16103).** It returns generic errors even when the message sends successfully.
+
+**This skill is the recommended approach** — it implements Discord's voice message protocol directly and gives reliable success/error feedback.
 
 ## Overview
 
@@ -79,51 +85,42 @@ ffprobe -version | head -1
 
 ## Configuration
 
-The skill reads the Discord bot token from environment:
+The skill reads the Discord bot token automatically from your OpenClaw config (`channels.discord.token`). No additional configuration needed.
 
-```json5
-// ~/.openclaw/openclaw.json
-{
-  skills: {
-    entries: {
-      "discord-voice": {
-        env: {
-          DISCORD_BOT_TOKEN: "YOUR_BOT_TOKEN_HERE"
-        }
-      }
-    }
-  }
-}
+If you prefer, you can also set it via environment variable:
+```bash
+export DISCORD_BOT_TOKEN="your_token_here"
 ```
-
-Or pass directly via `--token` flag.
 
 ## Usage
 
-### Basic usage (from agent)
+### From Agent (Recommended)
 
 ```bash
-{baseDir}/scripts/send_voice.py \
+python3 ~/.openclaw/workspace/skills/discord-voice/scripts/send_voice.py \
   --channel-id 1475190772830568682 \
   --audio-file /path/to/audio.wav
+```
+
+### With TTS Integration
+
+```bash
+# Generate voice audio first
+~/.openclaw/tools/tts-speak.sh "Hello Mr. Grey" /tmp/voice.wav kokoro 1
+
+# Then send as Discord voice message
+python3 ~/.openclaw/workspace/skills/discord-voice/scripts/send_voice.py \
+  --channel-id 1475566112019058758 \
+  --audio-file /tmp/voice.wav
 ```
 
 ### With verbose logging
 
 ```bash
-{baseDir}/scripts/send_voice.py \
+python3 ~/.openclaw/workspace/skills/discord-voice/scripts/send_voice.py \
   --channel-id 1475190772830568682 \
   --audio-file /path/to/audio.mp3 \
   --verbose
-```
-
-### Using environment token
-
-```bash
-export DISCORD_BOT_TOKEN="your_token"
-{baseDir}/scripts/send_voice.py \
-  --channel-id 1475190772830568682 \
-  --audio-file /path/to/audio.wav
 ```
 
 ## Input Formats
@@ -191,6 +188,16 @@ On failure, exits with non-zero code and prints error to stderr.
 - 64k bitrate, 48kHz sample rate
 - Skips conversion if already OGG/Opus
 
+## Why Not Native `asVoice`?
+
+| Feature | Native `asVoice` | This Skill |
+|---------|------------------|------------|
+| Error messages | Generic "Error" | Detailed per-step errors |
+| Success confirmation | Unreliable | JSON response with message_id |
+| Waveform generation | ✅ Yes | ✅ Yes |
+| Audio conversion | ✅ Yes | ✅ Yes |
+| Works reliably | ❌ No (Issue #16103) | ✅ Yes |
+
 ## Limitations
 
 - **No text content** — Voice messages cannot include message text (Discord limitation)
@@ -231,5 +238,5 @@ Large files may timeout. Try:
 ## See Also
 
 - Discord API docs: https://discord.com/developers/docs/resources/message
-- Issue #16103: OpenClaw's native voice message implementation (broken)
+- OpenClaw Issue #16103: Native `asVoice` broken
 - Gist: https://gist.github.com/HDR/7d5d4ce8bbe4b715d788a9bc9f99e02d (original implementation reference)
