@@ -2,6 +2,7 @@
 """
 Memory Dashboard - Visualize OpenClaw memory embeddings as an interactive 2D graph.
 
+Uses QMD backend: ~/.openclaw/agents/<agentId>/qmd/xdg-cache/qmd/index.sqlite
 Generates: dashboard.html with colored bubbles (clusters) and semantic edges.
 """
 
@@ -14,16 +15,8 @@ import umap
 import plotly.graph_objects as go
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Optional HDBSCAN clustering
-try:
-    import hdbscan
-    HDBSCAN_AVAILABLE = True
-except ImportError:
-    HDBSCAN_AVAILABLE = False
-    print("⚠ HDBSCAN not available - skipping semantic clustering")
-
 # Configuration
-DB_PATH = Path.home() / ".openclaw/memory/main.sqlite"  # Adjust agentId if needed
+QMD_DB_PATH = Path.home() / ".openclaw/agents/main/qmd/xdg-cache/qmd/index.sqlite"
 OUTPUT_DIR = Path.home() / ".openclaw/workspace/tools/memory-dashboard"
 OUTPUT_FILE = OUTPUT_DIR / "dashboard.html"
 
@@ -31,10 +24,6 @@ OUTPUT_FILE = OUTPUT_DIR / "dashboard.html"
 UMAP_N_COMPONENTS = 2
 UMAP_N_NEIGHBORS = 15
 UMAP_MIN_DIST = 0.1
-
-# HDBSCAN Settings (clustering)
-HDBSCAN_MIN_CLUSTER_SIZE = 3
-HDBSCAN_MIN_SAMPLES = 5
 
 # Edge Settings (similarity threshold for drawing edges)
 EDGE_SIMILARITY_THRESHOLD = 0.75  # Only show edges for very similar chunks
@@ -45,56 +34,81 @@ NODE_SIZE = 12
 NODE_OPACITY = 0.8
 
 
-def get_embeddings(db_path: Path) -> Tuple[np.ndarray, List[Dict]]:
+def get_qmd_embeddings(db_path: Path) -> Tuple[np.ndarray, List[Dict]]:
     """
-    Query SQLite for chunk embeddings and metadata.
+    Query QMD SQLite for chunk embeddings and metadata.
 
     Returns:
         embeddings: numpy array of shape (n_chunks, embedding_dim)
-        metadata: list of dicts with chunk_id, file_path, line_start, line_end, content
+        metadata: list of dicts with chunk_id, file_path, content, etc.
     """
     if not db_path.exists():
-        raise FileNotFoundError(f"Memory database not found: {db_path}")
+        raise FileNotFoundError(f"QMD database not found: {db_path}")
 
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
-    # Query chunks table - match actual schema from OpenClaw
-    cursor.execute("""
-        SELECT id, embedding, path, start_line, end_line, text
-        FROM chunks
-        ORDER BY id
-    """)
+    # Query: Join content (text) + documents (file path) + vectors_vec (embeddings)
+    # QMD stores:
+    # - content: hash, doc (text), created_at
+    # - documents: id, collection, path, title, hash, created_at, modified_at
+    # - vectors_vec: hash_seq (hash:seq), embedding (float[768])
 
+    query = """
+        SELECT
+            c.hash,
+            c.doc,
+            d.path,
+            d.title,
+            v.hash_seq,
+            v.embedding
+        FROM content c
+        LEFT JOIN documents d ON c.hash = d.hash
+        LEFT JOIN vectors_vec v ON c.hash = substr(v.hash_seq, 1, 64)
+        ORDER BY c.hash
+    """
+
+    cursor.execute(query)
     rows = cursor.fetchall()
 
     if not rows:
-        raise ValueError("No chunks found in database")
+        raise ValueError("No embeddings found in QMD database")
 
     embeddings = []
     metadata = []
 
     for row in rows:
-        chunk_id, embedding_json, file_path, start_line, end_line, content = row
+        hash_val, doc, path, title, hash_seq, embedding_blob = row
 
-        # Parse embedding from JSON
-        if isinstance(embedding_json, str):
-            embedding = json.loads(embedding_json)
-        elif isinstance(embedding_json, bytes):
-            embedding = json.loads(embedding_json.decode('utf-8'))
+        # Parse embedding from sqlite-vec format (float array as string)
+        if embedding_blob:
+            # sqlite-vec returns floats as comma-separated string
+            if isinstance(embedding_blob, str):
+                embedding = np.array([float(x) for x in embedding_blob.split(',')])
+            elif isinstance(embedding_blob, bytes):
+                # Parse binary format if needed
+                embedding = np.frombuffer(embedding_blob, dtype=np.float32)
+            else:
+                embedding = np.array(list(embedding_blob))
         else:
-            embedding = list(embedding_json)
+            continue  # Skip chunks without embeddings
+
+        if len(embedding) == 0:
+            continue
 
         embeddings.append(embedding)
         metadata.append({
-            "chunk_id": chunk_id,
-            "file_path": file_path,
-            "line_start": start_line,
-            "line_end": end_line,
-            "content": content[:200] + "..." if len(content) > 200 else content,  # Truncate for hover
+            "chunk_id": hash_seq,
+            "hash": hash_val,
+            "file_path": path or "unknown",
+            "title": title or path or "Untitled",
+            "content": doc[:300] + "..." if len(doc) > 300 else doc,
         })
 
     conn.close()
+
+    if not embeddings:
+        raise ValueError("No valid embeddings found in QMD database")
 
     return np.array(embeddings), metadata
 
@@ -109,25 +123,6 @@ def run_umap(embeddings: np.ndarray) -> np.ndarray:
         random_state=42
     )
     return reducer.fit_transform(embeddings)
-
-
-def cluster_embeddings(embeddings: np.ndarray) -> np.ndarray:
-    """
-    Cluster embeddings using HDBSCAN (if available).
-
-    Returns:
-        labels: cluster labels (-1 = noise, or 0 if clustering unavailable)
-    """
-    if not HDBSCAN_AVAILABLE:
-        # Return all zeros (single cluster) if HDBSCAN unavailable
-        return np.zeros(len(embeddings), dtype=int)
-
-    clusterer = hdbscan.HDBSCAN(
-        min_cluster_size=HDBSCAN_MIN_CLUSTER_SIZE,
-        min_samples=HDBSCAN_MIN_SAMPLES,
-        metric='euclidean'
-    )
-    return clusterer.fit_predict(embeddings)
 
 
 def compute_edges(embeddings: np.ndarray, coords: np.ndarray) -> List[Tuple[int, int, float]]:
@@ -155,17 +150,21 @@ def compute_edges(embeddings: np.ndarray, coords: np.ndarray) -> List[Tuple[int,
     return edges[:MAX_EDGES]
 
 
-def create_dashboard(coords: np.ndarray, labels: np.ndarray, metadata: List[Dict], edges: List[Tuple[int, int, float]]):
+def create_dashboard(coords: np.ndarray, metadata: List[Dict], edges: List[Tuple[int, int, float]]):
     """Create interactive Plotly dashboard."""
 
-    # Color map for clusters
-    n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
-    colors = ['hsl({}, 70%, 50%)'.format(i * 360 / n_clusters) for i in range(n_clusters)]
-    color_map = {i: colors[i] for i in set(labels) if i != -1}
-    color_map[-1] = 'hsl(0, 0%, 70%)'  # Gray for noise
+    # Color by file path (group similar files)
+    file_paths = [m['file_path'] for m in metadata]
+    unique_files = list(set(file_paths))
 
-    # Assign colors to nodes
-    node_colors = [color_map[label] for label in labels]
+    # Generate colors for each unique file
+    colors = []
+    for i, fp in enumerate(file_paths):
+        # Use hash of file path for consistent color
+        color_idx = hash(fp) % len(unique_files)
+        # HSL colors: varying hue, saturation 70%, lightness 50%
+        hue = (color_idx * 360 / len(unique_files)) if len(unique_files) > 0 else 0
+        colors.append(f'hsl({hue}, 70%, 50%)')
 
     # Create scatter trace (nodes)
     node_trace = go.Scatter(
@@ -174,17 +173,16 @@ def create_dashboard(coords: np.ndarray, labels: np.ndarray, metadata: List[Dict
         mode='markers',
         marker=dict(
             size=NODE_SIZE,
-            color=node_colors,
+            color=colors,
             opacity=NODE_OPACITY,
             line=dict(width=1, color='rgba(0,0,0,0.2)')
         ),
         hovertemplate=[
-            f"<b>Chunk {m['chunk_id']}</b><br>"
+            f"<b>{m['title']}</b><br>"
             f"File: {m['file_path']}<br>"
-            f"Lines: {m['line_start']}-{m['line_end']}<br>"
-            f"Cluster: {labels[i]}<br>"
+            f"Chunk: {m['chunk_id']}<br>"
             f"<i>{m['content']}</i>"
-            for i, m in enumerate(metadata)
+            for m in metadata
         ],
         name="Memory Chunks"
     )
@@ -212,10 +210,10 @@ def create_dashboard(coords: np.ndarray, labels: np.ndarray, metadata: List[Dict
     fig = go.Figure(data=edge_traces + [node_trace])
 
     # Layout
-    n_unique_clusters = len(set(labels))
+    unique_file_count = len(set(m['file_path'] for m in metadata))
     fig.update_layout(
-        title=f"OpenClaw Memory Visualization<br>"
-              f"<sup>{len(metadata)} chunks • {n_unique_clusters} clusters • {len(edges)} semantic edges</sup>",
+        title=f"OpenClaw Memory Visualization (QMD)<br>"
+              f"<sup>{len(metadata)} chunks from {unique_file_count} files • {len(edges)} semantic edges</sup>",
         showlegend=False,
         hovermode='closest',
         margin=dict(b=20, l=5, r=5, t=80),
@@ -235,11 +233,11 @@ def create_dashboard(coords: np.ndarray, labels: np.ndarray, metadata: List[Dict
 
 
 def main():
-    print("Building memory dashboard...")
+    print("Building memory dashboard from QMD...")
 
-    # Step 1: Get embeddings from SQLite
-    print("  → Loading embeddings...")
-    embeddings, metadata = get_embeddings(DB_PATH)
+    # Step 1: Get embeddings from QMD SQLite
+    print("  → Loading embeddings from QMD...")
+    embeddings, metadata = get_qmd_embeddings(QMD_DB_PATH)
     print(f"  → Loaded {len(embeddings)} chunks")
 
     # Step 2: UMAP for 2D projection
@@ -247,21 +245,14 @@ def main():
     coords = run_umap(embeddings)
     print(f"  → Projected to 2D: shape={coords.shape}")
 
-    # Step 3: HDBSCAN clustering
-    print("  → Clustering with HDBSCAN...")
-    labels = cluster_embeddings(embeddings)
-    n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
-    n_noise = list(labels).count(-1)
-    print(f"  → Found {n_clusters} clusters, {n_noise} noise points")
-
-    # Step 4: Compute edges (high similarity pairs)
+    # Step 3: Compute edges (high similarity pairs)
     print("  → Computing semantic edges...")
     edges = compute_edges(embeddings, coords)
     print(f"  → Created {len(edges)} edges (similarity ≥ {EDGE_SIMILARITY_THRESHOLD})")
 
-    # Step 5: Create dashboard
+    # Step 4: Create dashboard
     print("  → Generating interactive dashboard...")
-    create_dashboard(coords, labels, metadata, edges)
+    create_dashboard(coords, metadata, edges)
 
     print("\n✓ Done!")
     print(f"  Open in browser: file://{OUTPUT_FILE.absolute()}")

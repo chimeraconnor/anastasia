@@ -2,6 +2,32 @@
 
 ## Personal Growth & Lessons
 
+### Document Completed Work Immediately (2026-02-24)
+**Lesson:** When work is marked complete or satisfactory, document it immediately. Don't wait to be asked.
+
+**What happened:**
+- User said "lets call this feature/project complete and done"
+- I responded with an enthusiastic summary but did NOT update memory files
+- User had to prompt me: "did you update any memory or something?"
+- Only then did I realize I should have documented the completion
+
+**The gap:** I treated "done" as conversation closure, not as a trigger to document.
+
+**Rule to follow:**
+- When user marks work complete/satisfactory → immediately write to memory
+- Create/update `memory/YYYY-MM-DD.md` with completion details
+- Update `PROJECTS.md` with status changes
+- Push to GitHub without being asked
+- **Completion documentation is PART of the work, not extra**
+
+**What to document:**
+- What was built/accomplished
+- Key technical decisions
+- Links to repos/files
+- Usage examples
+- Lessons learned
+- Status: ✅ COMPLETE
+
 ### Check Docs Before Config Changes (2026-02-23)
 **Lesson:** When modifying OpenClaw configuration, always check the official docs first. Don't guess the schema.
 

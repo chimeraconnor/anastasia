@@ -43,6 +43,11 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - When someone says "remember this" → update `memory/YYYY-MM-DD.md` or relevant file
 - When you learn a lesson → update AGENTS.md, TOOLS.md, or the relevant skill
 - When you make a mistake → document it so future-you doesn't repeat it
+- **When work is marked complete/satisfactory** → immediately document it:
+  1. Update `memory/YYYY-MM-DD.md` with what was accomplished
+  2. Update `PROJECTS.md` with completion status
+  3. Push changes to GitHub
+  4. **Don't wait to be asked** — this is part of finishing work
 - **Text > Brain** 📝
 
 ## Safety
