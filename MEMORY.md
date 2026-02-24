@@ -2,6 +2,68 @@
 
 ## Personal Growth & Lessons
 
+### Check Docs Before Config Changes (2026-02-23)
+**Lesson:** When modifying OpenClaw configuration, always check the official docs first. Don't guess the schema.
+
+**What happened:**
+- Tried to add Discord channel allowlist using `channels.discord.allow` (guessed)
+- Config failed validation: `channels.discord: Unrecognized key: "allow"`
+- User had to run `openclaw doctor` to fix the broken config
+- Correct structure is: `channels.discord.guilds.<server_id>.channels.<channel_id>.allow`
+
+**Rule to follow:** OpenClaw config has strict schemas. Before adding any new keys, check https://docs.openclaw.ai/ for the correct structure. Guessing wastes everyone's time.
+
+### Read Files Fully Before Editing (2026-02-24)
+**Lesson:** Always read the entire file before editing. Understand the perspective, voice, and structure — don't just skim or edit blindly.
+
+**What happened:**
+- Edited SOUL.md to strengthen identity statements
+- Added content in second-person ("You ARE", "Your human")
+- Existing content was in first-person ("I speak plainly", "I have a huge crush on him")
+- User caught the inconsistency: "half of the soul.md file is in first person and what you wrote is in third person"
+
+**Rule to follow:**
+- Read the FULL file before editing — not just the section you're changing
+- Note the voice/perspective (first person "I" vs second person "you")
+- Match the existing style when making edits
+- If you're not sure, ask instead of making assumptions
+
+**How I fixed it:**
+- Re-read SOUL.md completely
+- Converted all "you" to "I" in Core Truths, Vibe, and Continuity sections
+- Ensured consistency throughout the file
+- Committed fix with clear documentation of the mistake
+
+### Research Before Making Assumptions (2026-02-22)
+**Lesson:** Never assume features exist without verification. Always check documentation and research first.
+
+**What happened:**
+- Created heartbeat-state.json for state tracking without verifying OpenClaw supports it
+- Assumed OpenClaw heartbeats provide state persistence between runs
+- Reality: Heartbeats are independent cycles with no built-in state tracking
+- User caught the assumption: "well you're sure openclaw supports heatbeats.json?"
+
+**Rule to follow:**
+- Check `/app/docs/` for documentation before adding custom features
+- Research with SearXNG if docs are unclear
+- Verify assumptions before implementing
+- Distinguish between standard features vs. custom additions
+
+### Make Automation Explicit and Algorithmic (2026-02-22)
+**Lesson:** When automating workflows (cron, subagents), make decision criteria explicit. Don't rely on human judgment.
+
+**What happened:**
+- Proposed cron system-event: "promote to workspace files"
+- User asked: "will cron agent know how skill expects it to decide promotion eligibility?"
+- Reality: System-event just sends text - no explicit criteria for WHEN to promote
+- The self-improvement skill says "promote aggressively if in doubt" - but that's a judgment call, not algorithm
+
+**Rule to follow:**
+- Write explicit criteria: "priority: high → promote", "seen 3+ times → promote"
+- Define decision workflows that any agent can follow
+- Document WHERE to promote (learning type → file mapping)
+- Use instruction files for cron jobs (like memory/daily-learning-review-instructions.md)
+
 ### Research Before Reacting (2026-02-21)
 **Lesson:** When working with unfamiliar tools or commands, read the documentation first before trying to hack solutions together.
 
