@@ -2,7 +2,7 @@
 """
 Memory Dashboard - Visualize OpenClaw memory embeddings as an interactive 2D graph.
 
-Uses QMD backend: ~/.openclaw/agents/<agentId>/qmd/xdg-cache/qmd/index.sqlite
+Uses QMD backend with sqlite-vec extension.
 Generates: dashboard.html with colored bubbles (clusters) and semantic edges.
 """
 
@@ -17,6 +17,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 # Configuration
 QMD_DB_PATH = Path.home() / ".openclaw/agents/main/qmd/xdg-cache/qmd/index.sqlite"
+VEC0_EXTENSION = Path("/home/node/.bun/install/global/node_modules/sqlite-vec-linux-x64/vec0.so")
 OUTPUT_DIR = Path.home() / ".openclaw/workspace/tools/memory-dashboard"
 OUTPUT_FILE = OUTPUT_DIR / "dashboard.html"
 
@@ -45,15 +46,16 @@ def get_qmd_embeddings(db_path: Path) -> Tuple[np.ndarray, List[Dict]]:
     if not db_path.exists():
         raise FileNotFoundError(f"QMD database not found: {db_path}")
 
+    if not VEC0_EXTENSION.exists():
+        raise FileNotFoundError(f"sqlite-vec extension not found: {VEC0_EXTENSION}")
+
     conn = sqlite3.connect(db_path)
+    conn.enable_load_extension(True)
+    conn.load_extension(str(VEC0_EXTENSION.absolute()))
     cursor = conn.cursor()
 
     # Query: Join content (text) + documents (file path) + vectors_vec (embeddings)
-    # QMD stores:
-    # - content: hash, doc (text), created_at
-    # - documents: id, collection, path, title, hash, created_at, modified_at
-    # - vectors_vec: hash_seq (hash:seq), embedding (float[768])
-
+    # vectors_vec stores: hash_seq (hash:seq), embedding (float[768] as bytes)
     query = """
         SELECT
             c.hash,
@@ -65,7 +67,8 @@ def get_qmd_embeddings(db_path: Path) -> Tuple[np.ndarray, List[Dict]]:
         FROM content c
         LEFT JOIN documents d ON c.hash = d.hash
         LEFT JOIN vectors_vec v ON c.hash = substr(v.hash_seq, 1, 64)
-        ORDER BY c.hash
+        WHERE v.embedding IS NOT NULL
+        ORDER BY v.hash_seq
     """
 
     cursor.execute(query)
@@ -78,20 +81,10 @@ def get_qmd_embeddings(db_path: Path) -> Tuple[np.ndarray, List[Dict]]:
     metadata = []
 
     for row in rows:
-        hash_val, doc, path, title, hash_seq, embedding_blob = row
+        hash_val, doc, path, title, hash_seq, embedding_bytes = row
 
-        # Parse embedding from sqlite-vec format (float array as string)
-        if embedding_blob:
-            # sqlite-vec returns floats as comma-separated string
-            if isinstance(embedding_blob, str):
-                embedding = np.array([float(x) for x in embedding_blob.split(',')])
-            elif isinstance(embedding_blob, bytes):
-                # Parse binary format if needed
-                embedding = np.frombuffer(embedding_blob, dtype=np.float32)
-            else:
-                embedding = np.array(list(embedding_blob))
-        else:
-            continue  # Skip chunks without embeddings
+        # Parse embedding from bytes (float32 array, 768 dims)
+        embedding = np.frombuffer(embedding_bytes, dtype=np.float32)
 
         if len(embedding) == 0:
             continue

@@ -1,0 +1,5 @@
+# Memory dashboard update cron job
+# Runs every 6 hours (0 */6 * * * *)
+# Path includes ~/.local/bin for python3 with pip packages
+
+0 */6 * * * * export PATH="$HOME/.local/bin:$PATH" && /usr/bin/python3 /home/node/.openclaw/workspace/tools/memory-dashboard/build_dashboard.py >> /tmp/dashboard-cron.log 2>&1
