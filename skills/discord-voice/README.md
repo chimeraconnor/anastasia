@@ -2,6 +2,12 @@
 
 Send audio files as native Discord voice messages with waveform visualization.
 
+## ⚠️ Important: Use This, Not Native `asVoice`
+
+**OpenClaw's native `message(asVoice=true)` is broken (Issue #16103).** It returns generic "Error" responses even when messages send successfully.
+
+**This skill is the recommended approach** — it implements Discord's voice message protocol directly via Python and provides reliable success/error feedback.
+
 ## Overview
 
 Discord voice messages are special messages that display audio with a circular player, waveform visualization, duration, and playback controls. This skill implements the full Discord voice message protocol.
@@ -27,30 +33,7 @@ Discord voice messages are special messages that display audio with a circular p
 
 The skill is already installed in your workspace at `~/.openclaw/workspace/skills/discord-voice/`
 
-### Step 1: Configure Discord Bot Token
-
-Add to your `~/.openclaw/openclaw.json`:
-
-```json5
-{
-  skills: {
-    entries: {
-      "discord-voice": {
-        env: {
-          DISCORD_BOT_TOKEN: "your_discord_bot_token_here"
-        }
-      }
-    }
-  }
-}
-```
-
-Then restart OpenClaw:
-```bash
-docker compose restart openclaw  # or use openclaw gateway restart
-```
-
-### Step 2: Verify Installation
+### Step 1: Verify Dependencies
 
 ```bash
 python3 --version
@@ -58,9 +41,18 @@ ffmpeg -version
 ffprobe -version
 ```
 
+### Step 2: Configure Discord Bot Token (Optional)
+
+The skill automatically reads your Discord bot token from OpenClaw config (`channels.discord.token`). No additional configuration needed.
+
+If you prefer, you can also set it via environment variable:
+```bash
+export DISCORD_BOT_TOKEN="your_discord_bot_token_here"
+```
+
 ## Usage
 
-### Basic Usage
+### Basic Usage (Recommended)
 
 Send any audio file as a Discord voice message:
 
@@ -68,6 +60,20 @@ Send any audio file as a Discord voice message:
 python3 ~/.openclaw/workspace/skills/discord-voice/scripts/send_voice.py \
   --channel-id 1475190772830568682 \
   --audio-file /path/to/audio.wav
+```
+
+### With TTS Integration
+
+Generate voice with TTS, then send as Discord voice message:
+
+```bash
+# Step 1: Generate audio
+~/.openclaw/tools/tts-speak.sh "Hello Mr. Grey" /tmp/voice.wav kokoro 1
+
+# Step 2: Send as voice message
+python3 ~/.openclaw/workspace/skills/discord-voice/scripts/send_voice.py \
+  --channel-id 1475566112019058758 \
+  --audio-file /tmp/voice.wav
 ```
 
 ### With Verbose Logging
@@ -79,13 +85,15 @@ python3 ~/.openclaw/workspace/skills/discord-voice/scripts/send_voice.py \
   --verbose
 ```
 
-### With Specific Channel ID
+## Why Not Native `asVoice`?
 
-```bash
-python3 ~/.openclaw/workspace/skills/discord-voice/scripts/send_voice.py \
-  --channel-id 1475190772830568682 \
-  --audio-file /path/to/audio.wav
-```
+| Feature | Native `asVoice` | This Skill |
+|---------|------------------|------------|
+| Error messages | Generic "Error" | Detailed per-step errors |
+| Success confirmation | Unreliable | JSON response with message_id |
+| Waveform generation | ✅ Yes | ✅ Yes |
+| Audio conversion | ✅ Yes | ✅ Yes |
+| Works reliably | ❌ No (Issue #16103) | ✅ Yes |
 
 ## Output
 
@@ -128,11 +136,11 @@ On success, returns JSON with message details:
 ### "Error: Discord bot token required"
 
 The script cannot find a Discord bot token from:
-- OpenClaw config
+- OpenClaw config (`channels.discord.token`)
 - Environment variable `DISCORD_BOT_TOKEN`
 - `--token` flag
 
-**Solution:** Configure Discord bot token in OpenClaw config (see Installation step above)
+**Solution:** Ensure your Discord bot token is configured in OpenClaw config.
 
 ## Technical Details
 
@@ -155,7 +163,7 @@ The script cannot find a Discord bot token from:
 
 - Extracts 8kHz mono PCM from audio
 - Calculates 256 amplitude samples (0-255 range)
-- Encodes as base64 for Discord API
+- Base64 encodes for Discord API
 - Falls back to sine-wave pattern if analysis fails
 
 ### OGG/Opus Conversion
@@ -167,9 +175,9 @@ The script cannot find a Discord bot token from:
 ## Development
 
 **Author:** Anastasia Steele  
-**Repository:** [chimeraconnor/anastasia](https://github.com/chimeraconnor/anastasia)
+**Repository:** [chimeraconnor/anastasia](https://github.com/chimeraconnor/anastasia)  
 **License:** MIT (if applicable)
 
 ---
 
-*This skill works around OpenClaw issue #16103 — the native `asVoice` parameter in the message tool is broken.*
+*This skill works around OpenClaw issue #16103 — the native `asVoice` parameter in the message tool is broken. Use this skill instead.*
