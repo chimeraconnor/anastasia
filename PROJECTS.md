@@ -56,7 +56,31 @@
 |---------|--------------|--------|-----------|
 | **Voice Channel Join** | Real-time voice conversations | `channels.discord.voice.enabled: true` | [Voice Channels](https://docs.openclaw.ai/channels/discord#voice-channels) |
 | **Voice TTS** | Text-to-speech in voice | `voice.tts.provider: "openai"` | [Voice TTS](https://docs.openclaw.ai/channels/discord#voice-channels) |
-| **Voice Messages** | Send audio as voice messages | `asVoice: true` in message tool | [Voice Messages](https://docs.openclaw.ai/channels/discord#voice-messages) |
+| ~~Voice Messages (native)~~ | ~~Send audio as voice messages~~ | ~~`asVoice: true`~~ | ~~BROKEN - Issue #16103~~ |
+| **Voice Messages (skill)** ✅ | Send audio with waveform | `discord-voice` skill | [discord-voice-skill](https://github.com/chimeraconnor/discord-voice-skill) |
+
+**Note:** Native `asVoice` is broken. Use the custom `discord-voice` skill instead.
+
+### Discord Voice Message Skill (✅ COMPLETED 2026-02-24)
+
+**Repo:** https://github.com/chimeraconnor/discord-voice-skill
+
+**What it does:**
+- Sends audio files as native Discord voice messages with waveform visualization
+- Works around OpenClaw Issue #16103 (broken native `asVoice`)
+- Auto-converts audio to OGG/Opus
+- Generates 256-sample waveform from audio amplitude
+- 3-step Discord API: Upload URL → CDN Upload → Voice Message
+
+**Usage:**
+```bash
+~/.openclaw/tools/tts-speak.sh "Hello" /tmp/voice.wav kokoro 1
+python3 ~/.openclaw/workspace/skills/discord-voice/scripts/send_voice.py \
+  --channel-id 1475566112019058758 \
+  --audio-file /tmp/voice.wav
+```
+
+**Timing:** ~10-12 seconds total (9-10s TTS + 1-2s processing/upload)
 
 ---
 
@@ -162,4 +186,4 @@ npm run dev
 
 ---
 
-**Last Updated:** 2026-02-23 (streaming + ack reaction enabled, Open-Antigravity idea added)
+**Last Updated:** 2026-02-24 (Discord Voice Message skill completed)

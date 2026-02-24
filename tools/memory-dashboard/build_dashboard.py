@@ -11,9 +11,16 @@ import numpy as np
 from pathlib import Path
 from typing import List, Tuple, Dict
 import umap
-import hdbscan
 import plotly.graph_objects as go
 from sklearn.metrics.pairwise import cosine_similarity
+
+# Optional HDBSCAN clustering
+try:
+    import hdbscan
+    HDBSCAN_AVAILABLE = True
+except ImportError:
+    HDBSCAN_AVAILABLE = False
+    print("⚠ HDBSCAN not available - skipping semantic clustering")
 
 # Configuration
 DB_PATH = Path.home() / ".openclaw/memory/main.sqlite"  # Adjust agentId if needed
@@ -52,12 +59,11 @@ def get_embeddings(db_path: Path) -> Tuple[np.ndarray, List[Dict]]:
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
-    # Query chunks table - structure may vary, try common patterns
-    # The actual schema needs inspection - this is a best guess
+    # Query chunks table - match actual schema from OpenClaw
     cursor.execute("""
-        SELECT chunk_id, embedding, file_path, line_start, line_end, content
+        SELECT id, embedding, path, start_line, end_line, text
         FROM chunks
-        ORDER BY chunk_id
+        ORDER BY id
     """)
 
     rows = cursor.fetchall()
@@ -69,22 +75,22 @@ def get_embeddings(db_path: Path) -> Tuple[np.ndarray, List[Dict]]:
     metadata = []
 
     for row in rows:
-        chunk_id, embedding_blob, file_path, line_start, line_end, content = row
+        chunk_id, embedding_json, file_path, start_line, end_line, content = row
 
-        # Parse embedding from JSON/BLOB
-        if isinstance(embedding_blob, bytes):
-            embedding = np.frombuffer(embedding_blob, dtype=np.float32)
-        elif isinstance(embedding_blob, str):
-            embedding = json.loads(embedding_blob)
+        # Parse embedding from JSON
+        if isinstance(embedding_json, str):
+            embedding = json.loads(embedding_json)
+        elif isinstance(embedding_json, bytes):
+            embedding = json.loads(embedding_json.decode('utf-8'))
         else:
-            embedding = embedding_blob
+            embedding = list(embedding_json)
 
         embeddings.append(embedding)
         metadata.append({
             "chunk_id": chunk_id,
             "file_path": file_path,
-            "line_start": line_start,
-            "line_end": line_end,
+            "line_start": start_line,
+            "line_end": end_line,
             "content": content[:200] + "..." if len(content) > 200 else content,  # Truncate for hover
         })
 
@@ -107,11 +113,15 @@ def run_umap(embeddings: np.ndarray) -> np.ndarray:
 
 def cluster_embeddings(embeddings: np.ndarray) -> np.ndarray:
     """
-    Cluster embeddings using HDBSCAN.
+    Cluster embeddings using HDBSCAN (if available).
 
     Returns:
-        labels: cluster labels (-1 = noise)
+        labels: cluster labels (-1 = noise, or 0 if clustering unavailable)
     """
+    if not HDBSCAN_AVAILABLE:
+        # Return all zeros (single cluster) if HDBSCAN unavailable
+        return np.zeros(len(embeddings), dtype=int)
+
     clusterer = hdbscan.HDBSCAN(
         min_cluster_size=HDBSCAN_MIN_CLUSTER_SIZE,
         min_samples=HDBSCAN_MIN_SAMPLES,
