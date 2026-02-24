@@ -116,6 +116,17 @@
 - **Out-of-vocabulary words** are skipped with warning
 - **v1.0 vs v1.1:** v1.0 has 55 speakers (0-54), v1.1 has 103 speakers. v1.0 is currently in use via wrapper
 
+### GitHub CLI Authentication (2026-02-24)
+- **PAT tokens are the reliable method** for `gh` CLI authentication in this environment
+- **Device code flow (`gh auth login --web`) is unreliable** — keeps timing out and getting killed
+- **Use `gh auth login --with-token`** instead when you have a PAT token
+- **Current token expires:** March 26, 2026 — regenerate before then
+- **Token stored in:** `~/.config/gh/hosts.yml`
+- **What the token enables:** GitHub API access, repo management, issues/PRs, CI runs
+- **Public vs private repos:** Can access any public repo; only private repos you have explicit access to
+
+**Rule:** Don't waste time on device code links. If a PAT token is available, use `--with-token` directly. It's faster and actually works in this environment.
+
 ## Code Backup Policy (2026-02-22)
 
 **Anastasia's GitHub Repositories:**

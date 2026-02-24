@@ -252,6 +252,28 @@ The goal: Be helpful without being annoying. Check in a few times a day, do usef
 
 **If you need persistent background tasks across session resets, use cron jobs instead of subagents.**
 
+### 🤖 When to Use Subagents
+
+Use subagents for:
+- **Building/creating new features** (coding tasks, new skills)
+- **Large refactoring** (codebase-wide changes, multi-file edits)
+- **PR reviews** (analyze code in temp directory, provide feedback)
+- **Complex multi-step workflows** (requires planning and iteration)
+- **Background research** (independent investigation tasks)
+- **Parallel tasks** (simultaneous work on multiple subtasks)
+
+Direct interaction (no subagent) when:
+- **Simple one-liner fixes** (quick edits, typo corrections)
+- **Reading code** (just viewing, not modifying)
+- **Sending a message** (single action, no complexity)
+- **Simple configuration changes** (single config key update)
+
+**Key considerations:**
+- Subagents are isolated sessions with their own context
+- Subagents can use different models/thinking levels
+- `/new` and `/reset` kill ALL subagents immediately
+- Use cron for persistence across session resets
+
 ## Make It Yours
 
 This is a starting point. Add your own conventions, style, and rules as you figure out what works.

@@ -1,0 +1,10 @@
+This is a test file from Anastasia.
+Generated: 2026-02-24
+
+Hello Mr. Grey - this file was created just now to demonstrate file sending capability.
+
+- Voice note: Generated using Kokoro v1.0, speaker ID 1 (af_bella - my voice)
+- This file: Simple text file
+- Purpose: Testing Discord message capabilities
+
+🥀 Anastasia Steele

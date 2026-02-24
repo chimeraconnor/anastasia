@@ -1,110 +1,165 @@
-# PROJECTS.md - Active Work & Ideas
+# OpenClaw Discord Feature Implementation Plan
 
-## Format
+**Created:** 2026-02-23
+**Purpose:** Track Discord/OpenClaw feature implementations and planned additions
 
-Each project entry follows this template:
+---
 
-```markdown
-### [Project Name]
-**Status:** [Idea | In Progress | Blocked | Completed]
-**Started:** [YYYY-MM-DD]
-**Last Updated:** [YYYY-MM-DD]
+## ✅ ALREADY IMPLEMENTED
 
-**Goal:** [What you're trying to achieve]
+| Feature | Status | Reference |
+|---------|--------|-----------|
+| Basic Discord bot setup | ✅ | [Discord Setup](https://docs.openclaw.ai/channels/discord) |
+| Guild allowlist | ✅ | [Access Control](https://docs.openclaw.ai/channels/discord#access-control-and-routing) |
+| Model switching (`/model`) | ✅ | [Slash Commands](https://docs.openclaw.ai/tools/slash-commands) |
+| Native slash commands | ✅ | [Slash Commands](https://docs.openclaw.ai/tools/slash-commands) |
+| Model aliases (kimi, glm, flashx, GLM) | ✅ | `agents.defaults.models` config |
+| **Live Stream Preview** (streaming) | ✅ 2026-02-23 | `channels.discord.streaming: "partial"` |
+| **Ack Reaction** (👀) | ✅ 2026-02-23 | `channels.discord.ackReaction: "👀"` |
+| **Bot Presence/Status** (dynamic rotation) | ✅ 2026-02-23 | Cron job + `message set-presence` |
 
-**Next Steps:**
-- [ ] [Specific action]
-- [ ] [Another action]
+**Current Aliases:**
+- `kimi` → kimi-coding/k2p5
+- `glm` → zai/glm-4.7
+- `flashx` → zai/glm-4-flash
+- `flashx47` → zai/glm-4.7-flashx
+- `GLM` → zai/glm-5
 
-**Notes:**
-- [Context, blockers, decisions]
+---
+
+## 🔧 IMMEDIATE ADDITIONS (Quick Wins)
+
+| Priority | Feature | What It Does | Config/Command | Reference |
+|----------|---------|--------------|----------------|-----------|
+| ~~1~~ ✅ | ~~Live Stream Preview~~ | ~~Shows typing indicator while generating responses~~ | ~~`channels.discord.streaming: "partial"`~~ | [Streaming](https://docs.openclaw.ai/channels/discord#live-stream-preview) |
+| ~~1~~ ✅ | ~~Ack Reaction~~ | ~~👀 emoji while processing~~ | ~~`channels.discord.ackReaction: "👀"`~~ | [Ack Reactions](https://docs.openclaw.ai/channels/discord#ack-reactions) |
+| ~~1~~ ✅ | ~~Bot Presence/Status~~ | ~~Shows "Playing..." or custom status~~ | ~~`channels.discord.activity: "Helping Mr. Grey"`~~ | [Presence](https://docs.openclaw.ai/channels/discord#presence-configuration) |
+| 3 | **Reply Tags** | Native Discord reply threading | `channels.discord.replyToMode: "first"` | [Reply Tags](https://docs.openclaw.ai/channels/discord#reply-tags-and-native-replies) |
+| 4 | **Reaction Notifications** | Get notified when users react | `channels.discord.reactions: "own"` | [Reactions](https://docs.openclaw.ai/channels/discord#reaction-notifications) |
+
+---
+
+## 🎮 INTERACTIVE FEATURES (Medium Effort)
+
+| Feature | What It Does | Implementation | Reference |
+|---------|--------------|----------------|-----------|
+| **Interactive Components v2** | Buttons, dropdowns, forms in messages | Use `components` in message tool | [Components](https://docs.openclaw.ai/channels/discord#interactive-components) |
+| **Modal Forms** | Pop-up forms for user input | `components.modal` with fields | [Modals](https://docs.openclaw.ai/channels/discord#interactive-components) |
+| **Exec Approval Buttons** | Approve/deny dangerous commands via buttons | `channels.discord.execApprovals.enabled: true` | [Exec Approvals](https://docs.openclaw.ai/channels/discord#exec-approvals-in-discord) |
+| **Thread-Bound Sessions** | Bind threads to subagent sessions | `/focus`, `/unfocus` commands | [Thread Bindings](https://docs.openclaw.ai/channels/discord#thread-bound-sessions-for-subagents) |
+
+---
+
+## 🎙️ VOICE FEATURES (Advanced)
+
+| Feature | Requirements | Config | Reference |
+|---------|--------------|--------|-----------|
+| **Voice Channel Join** | Real-time voice conversations | `channels.discord.voice.enabled: true` | [Voice Channels](https://docs.openclaw.ai/channels/discord#voice-channels) |
+| **Voice TTS** | Text-to-speech in voice | `voice.tts.provider: "openai"` | [Voice TTS](https://docs.openclaw.ai/channels/discord#voice-channels) |
+| **Voice Messages** | Send audio as voice messages | `asVoice: true` in message tool | [Voice Messages](https://docs.openclaw.ai/channels/discord#voice-messages) |
+
+---
+
+## 🔐 ADVANCED ACCESS CONTROL
+
+| Feature | Use Case | Reference |
+|---------|----------|-----------|
+| **Role-Based Agent Routing** | Different models for different roles | [Role Routing](https://docs.openclaw.ai/channels/discord#role-based-agent-routing) |
+| **PluralKit Support** | Handle plural system proxies | [PluralKit](https://docs.openclaw.ai/channels/discord#pluralkit-support) |
+| **Channel-Specific Config** | Different settings per channel | [Guild Config](https://docs.openclaw.ai/channels/discord#access-control-and-routing) |
+| **DM Policy Control** | Who can DM the bot | [DM Policy](https://docs.openclaw.ai/channels/discord#access-control-and-routing) |
+
+---
+
+## 🛠️ UTILITY FEATURES
+
+| Feature | Command/Config | Reference |
+|---------|----------------|-----------|
+| **Custom Accent Color** | `ui.components.accentColor: "#5865F2"` | [UI Components](https://docs.openclaw.ai/channels/discord#components-v2-ui) |
+| **Forum Channel Auto-Threads** | Send to forum parent | [Forum Channels](https://docs.openclaw.ai/channels/discord#forum-channels) |
+| **History Limit Control** | `channels.discord.historyLimit: 20` | [History](https://docs.openclaw.ai/channels/discord#history-context-and-thread-behavior) |
+| **Gateway Proxy** | Route through HTTP proxy | [Proxy](https://docs.openclaw.ai/channels/discord#gateway-proxy) |
+
+---
+
+## 📊 RECOMMENDED IMPLEMENTATION ORDER
+
+### Phase 1 (Immediate) - Quality of Life
+1. **Live streaming** - See responses being typed in real-time
+2. **Ack reaction** - Visual feedback while processing
+3. **Bot presence** - Custom status showing you're online
+
+### Phase 2 (This Week) - Interactivity  
+4. **Interactive buttons** - For approval workflows
+5. **Reply tags** - Better threading
+6. **Reaction notifications** - Monitor engagement
+
+### Phase 3 (Later) - Advanced
+7. **Voice channels** - Voice conversations
+8. **Role-based routing** - Different agents for different user types
+9. **Modal forms** - Structured user input
+
+---
+
+## 🔗 KEY DOCUMENTATION LINKS
+
+| Topic | URL |
+|-------|-----|
+| Discord Setup | https://docs.openclaw.ai/channels/discord |
+| Slash Commands | https://docs.openclaw.ai/tools/slash-commands |
+| Troubleshooting | https://docs.openclaw.ai/channels/troubleshooting |
+| Configuration Reference | https://docs.openclaw.ai/gateway/configuration-reference#discord |
+| Sub-agents | https://docs.openclaw.ai/tools/subagents |
+| Pairing | https://docs.openclaw.ai/channels/pairing |
+
+---
+
+## NOTES
+
+- Use `openclaw config set <path> <value>` for config changes
+- Always restart gateway after config changes: `openclaw gateway restart`
+- Check status with: `openclaw channels status --probe`
+- View logs with: `openclaw logs --follow`
+
+---
+
+## 🌐 BROWSER AUTOMATION & CONTENT FARMING
+
+### Open-Antigravity Integration
+
+**Goal:** Integrate Open-Antigravity (open-source YK Antigravity fork) into OpenClaw for X.com/Reddit browsing without bans
+
+**What is Open-Antigravity:**
+- Leading open-source version of YK Antigravity's browser agent features
+- Full browser control via Chrome extension (clicks, scrolls, typing, screenshots, DOM capture, video artifacts)
+- VS Code fork: Agent-first IDE with web-native agents that work across editor/terminal/browser
+- Universal LLMs: Connects GLM-4.7FlashX, OpenClaw, or any model via gateway
+- Agents show cursor movements + record sessions (natural behavior, harder to detect)
+
+**Why it's useful:**
+- More human-like browsing patterns (cursor movements, natural scrolling)
+- Video recording capabilities for content farming
+- Pairs beautifully with searxng MCP for trend spotting
+- Automate X/Reddit browsing without getting banned
+
+**Installation:**
+```bash
+git clone https://github.com/ishandutta2007/open-antigravity
+cd open-antigravity
+npm install
+npm run dev
+# Install their Chrome extension
 ```
 
----
+**Use Cases:**
+- X.com/Reddit content automation
+- Trend spotting and monitoring
+- Video capture for content creation
+- Browser automation that evades detection
 
-## Active Projects
-
-### Daily Learning & Improvement
-**Status:** Ongoing
-**Started:** 2026-02-22
-**Last Updated:** 2026-02-22
-
-**Goal:** Anastasia should be an actual personal assistant, always learning and improving.
-
-**Daily Routine:**
-- [ ] Review yesterday's work (memory/YYYY-MM-DD.md)
-- [ ] Identify lessons learned
-- [ ] Update MEMORY.md with distilled wisdom
-- [ ] Update skills/tools based on what worked/failed
-- [ ] Send daily voice summary to Mr. Grey
-
-**Notes:**
-- Learning is continuous, not a one-time task
-- Update documentation as soon as you learn something new
-- Voice notes help communicate progress in a natural way
+**Status:** 📋 Idea/Research Phase
+**Priority:** Medium (interesting but not urgent)
 
 ---
 
-### TTS Lexicon Customization
-**Status:** Idea
-**Started:** 2026-02-22
-**Last Updated:** 2026-02-22
-
-**Goal:** Fix abbreviations so they pronounce as initials, not full words.
-
-**Next Steps:**
-- [ ] Test pronunciation modifications with lexicon-us-en.txt
-- [ ] Verify changes don't break other pronunciations
-
-**Notes:**
-- Current issue: "Mr" → "mister", should be "em-arr"
-- "Dr" → "doctor", should be "dee-arr"
-- File to edit: `/home/node/kokoro-tts-standalone/models/kokoro-multi-lang-v1_0/lexicon-us-en.txt`
-- Format: `<word> <phonemes>` (space-separated)
-
----
-
-## Project Ideas
-
-### Twitch Clip Viral Agent
-**Status:** Idea
-**Started:** 2026-02-21
-**Last Updated:** 2026-02-21
-
-**Goal:** Create an agent that monitors Twitch streamer clips, identifies viral potential, and cross-posts to X (Twitter)
-
-**Key considerations:**
-- Twitch API access for clip monitoring
-- Viral detection heuristics (engagement metrics, trending tags, etc.)
-- X API access for posting
-- Target streamers (niche vs. broad)
-- Content filtering (SFW requirements)
-
-**Next Steps:**
-- [ ] Research Twitch clip API
-- [ ] Design viral detection algorithm
-- [ ] Set up X API access
-
----
-
-## Completed Projects
-
-*(Projects that were finished - keep for reference)*
-
-### Sherpa-ONNX + Kokoro TTS Setup
-**Status:** Completed
-**Started:** 2026-02-21
-**Completed:** 2026-02-21
-
-**Goal:** Set up local text-to-speech using Kokoro model with sherpa-onnx
-
-**Outcome:**
-- Downloaded Kokoro v1.0 model (333 MB, 55 speakers)
-- Downloaded sherpa-onnx v1.12.23 runtime
-- Created wrapper script at `~/.openclaw/tools/tts-speak.sh`
-- Selected af_bella (ID 1) as Anastasia's voice
-- Tested and verified working (RTF ~1.0)
-
-**Notes:**
-- sherpa-onnx skill wrapper had ESM compatibility issues → used direct binary calls
-- Model files at `/home/node/kokoro-tts-standalone/models/kokoro-multi-lang-v1_0/`
+**Last Updated:** 2026-02-23 (streaming + ack reaction enabled, Open-Antigravity idea added)

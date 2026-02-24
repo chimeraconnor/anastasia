@@ -83,7 +83,7 @@ TOOLS.md was bloated (352 lines) - stripped to critical reference only (110 line
 
 **Logged**: 2026-02-22T12:10:00Z
 **Priority**: high
-**Status**: resolved
+**Status**: promoted
 **Area**: docs
 
 ### Summary
@@ -120,6 +120,7 @@ Created heartbeat-state.json for state tracking without verifying OpenClaw actua
 
 ### Resolution
 - **Resolved**: 2026-02-22T12:10:00Z
+- **Promoted**: 2026-02-24T03:30:00Z → MEMORY.md
 - **Notes**: Updated HEARTBEAT.md to clarify that heartbeat-state.json is a custom addition, not a standard OpenClaw feature. Learned to verify docs and research before making changes.
 
 ---
@@ -128,7 +129,7 @@ Created heartbeat-state.json for state tracking without verifying OpenClaw actua
 
 **Logged**: 2026-02-22T12:30:00Z
 **Priority**: high
-**Status**: resolved
+**Status**: promoted
 **Area**: automation
 
 ### Summary
@@ -168,6 +169,7 @@ Create `memory/daily-learning-review-instructions.md` with explicit workflow
 
 ### Resolution
 - **Resolved**: 2026-02-22T12:30:00Z
+- **Promoted**: 2026-02-24T03:30:00Z → MEMORY.md
 - **Created**: memory/daily-learning-review-instructions.md
 - **Updated**: Cron command to reference instruction file instead of inline message
 
@@ -177,7 +179,7 @@ Create `memory/daily-learning-review-instructions.md` with explicit workflow
 
 **Logged**: 2026-02-22T12:45:00Z
 **Priority**: high
-**Status**: resolved
+**Status**: promoted
 **Area**: infra
 
 ### Summary
@@ -221,6 +223,7 @@ When downloading models or saving important files:
 
 ### Resolution
 - **Resolved**: 2026-02-22T12:45:00Z
+- **Promoted**: 2026-02-24T03:30:00Z → TOOLS.md
 - **Notes**: Documented discrepancy. Will verify workspace path when downloading models. User's `/root/.openclaw/workspace/` is intended volume mount, but from container perspective I access `/home/node/.openclaw/workspace/`. Need to verify which is correct.
 
 ---
@@ -316,7 +319,7 @@ Monitor first cron run to verify workflow works correctly
 
 **Logged**: 2026-02-22T13:50:00Z
 **Priority**: high
-**Status**: resolved
+**Status**: promoted
 **Area**: tools
 
 ### Summary
@@ -347,6 +350,7 @@ Misunderstood voice-call plugin purpose - thought it was for generating audio, b
 
 ### Resolution
 - **Resolved**: 2026-02-22T13:50:00Z
+- **Promoted**: 2026-02-24T03:30:00Z → TOOLS.md
 - **Notes**: Clarified that voice-call is for inbound phone calls (Twilio, etc.), not TTS audio generation. TTS = sherpa-onnx for voice notes.
 
 ---
@@ -355,7 +359,7 @@ Misunderstood voice-call plugin purpose - thought it was for generating audio, b
 
 **Logged**: 2026-02-22T14:50:00Z
 **Priority**: medium
-**Status**: resolved
+**Status**: promoted
 **Area**: tools
 
 ### Summary
@@ -407,6 +411,7 @@ When checking plugin availability:
 
 ### Resolution
 - **Resolved**: 2026-02-22T14:50:00Z
+- **Promoted**: 2026-02-24T03:30:00Z → TOOLS.md
 - **Notes**: Voice-call is a plugin configured via gateway config entries, not a CLI command. Use `openclaw gateway call plugins.list` to check if loaded.
 
 ---
@@ -415,7 +420,7 @@ When checking plugin availability:
 
 **Logged**: 2026-02-22T13:36:00Z
 **Priority**: medium
-**Status**: resolved
+**Status**: promoted
 **Area**: workflow
 
 ### Summary
@@ -455,6 +460,7 @@ Use cron for persistent tasks across session resets.
 
 ### Resolution
 - **Resolved**: 2026-02-22T13:36:00Z
+- **Promoted**: 2026-02-24T03:30:00Z → AGENTS.md
 - **Notes**: Documented subagent usage guidelines. Use for complex tasks, direct tools for quick interactions. Session resets kill subagents - use cron for persistence.
 
 ---

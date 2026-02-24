@@ -1,6 +1,12 @@
 {
   "lastChecks": {
-    "morningGreeting": "2026-02-22T13:15:00Z",
-    "learningReview": null
+    "morningGreeting": "2026-02-24T01:31:00Z",
+    "learningReview": "2026-02-24T03:30:00Z"
+  },
+  "lastReview": {
+    "date": "2026-02-24",
+    "learningsReviewed": 10,
+    "learningsPromoted": 6,
+    "promotedTo": ["MEMORY.md", "TOOLS.md", "AGENTS.md"]
   }
 }

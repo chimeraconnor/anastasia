@@ -96,6 +96,26 @@ python3 ~/.openclaw/workspace/skills/discord-voice/scripts/send_voice.py \
 
 **Note:** Native OpenClaw `asVoice` is broken (Issue #16103). This skill provides a working alternative.
 
+### Voice-Call Plugin (Phone Calls)
+
+**Purpose:** Actual phone calls (Twilio, Telnyx, Plivo) - NOT text-to-speech (TTS)
+
+**Configuration:**
+- Configured via gateway config: `plugins.entries.voice-call.enabled` and `plugins.entries.voice-call.config`
+- Location: `/root/.openclaw/config.json` or via `openclaw config set`
+- Not a CLI command - it's a plugin entry point
+
+**Usage:**
+- User in web UI sends "call me" → OpenClaw starts voice call to phone
+- Uses Twilio/Telnyx/Plivo for actual phone calls
+- **Critical distinction:** "Voice call" = phone calls, "Voice note" = TTS audio (sherpa-onnx)
+
+**Testing:**
+- Use `provider: "mock"` for dev/testing (no network, no costs)
+- Check if loaded: `openclaw gateway call plugins.list --params '{}'`
+
+**Key lesson:** Don't confuse "voice call" (phone) with "voice note" (audio file). They're completely different systems.
+
 ## Docker/VPS Setup Note (2026-02-22)
 
 **Volume Mapping:**
@@ -111,6 +131,11 @@ python3 ~/.openclaw/workspace/skills/discord-voice/scripts/send_voice.py \
 **Persistent storage:**
 - All files saved to `/home/node/.openclaw/workspace/` survive container restarts
 - Volume mount ensures they persist to your host drive at `/root/.openclaw/workspace/`
+
+**Critical distinction:**
+- **Host path** (`/root/.openclaw/workspace/`) is OUTSIDE the container
+- **Container path** (`/home/node/.openclaw/workspace/`) is INSIDE the container
+- Environment variable `OPENCLAW_WORKSPACE_DIR` shows the host path for reference, but use container path for operations
 
 ## Sherpa-ONNX TTS
 
@@ -194,3 +219,18 @@ SID="${SPEAKER_ID:-1}"  # Changed from 6
 - Contains all code, identity files, memories, tools, skills, scripts
 - Complete backup — can restore Anastasia by cloning this repo
 - 1,559 files backed up (excludes large TTS model files)
+
+**GitHub CLI (`gh`) Authentication (2026-02-24)**
+- **Status:** Logged in via PAT token
+- **Token stored:** `~/.config/gh/hosts.yml`
+- **Current token expires:** March 26, 2026 — regenerate before then
+- **Authentication method:** `echo "TOKEN" | gh auth login --with-token`
+- **Device code flow is broken** — don't use `gh auth login --web`, it times out
+- **What it enables:**
+  - GitHub API queries (repos, users, organizations)
+  - Create/manage issues and pull requests
+  - Search repositories and code
+  - View PR reviews, CI runs, workflows
+  - Access to any public repo, private repos you have explicit access to
+
+**Rule:** Always use `--with-token` method. Don't waste time on device code links — they don't work reliably in this environment.
