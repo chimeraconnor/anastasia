@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Ana's Brain</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:      #08080f;
+    --sidebar: #0e0e18;
+    --panel:   #14142a;
+    --border:  rgba(120,120,200,0.1);
+    --accent:  #7b7fff;
+    --text:    #b8b8d0;
+    --dim:     #555570;
+    --glow:    rgba(130,130,255,0.15);
+  }
+  html, body { height: 100%; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 13px; overflow: hidden; }
+
+  #app { display: flex; height: 100vh; }
+
+  /* ── Sidebar ── */
+  #sidebar {
+    width: 300px; min-width: 260px; background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; z-index: 10;
+  }
+  #sidebar-header {
+    padding: 16px 16px 12px; border-bottom: 1px solid var(--border);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-icon { font-size: 24px; }
+  .brand-name { font-size: 16px; font-weight: 700; color: #e0e0ff;
+    letter-spacing: 0.02em; }
+  .brand-sub { font-size: 10px; color: var(--dim); margin-top: 2px; }
+  #sidebar-body { flex: 1; overflow-y: auto; padding: 12px;
+    display: flex; flex-direction: column; gap: 14px; }
+
+  .section-label { font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--dim); margin-bottom: 6px; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .stat { background: var(--panel); border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px 10px; }
+  .stat-val { font-size: 20px; font-weight: 800; color: #e0e0ff; }
+  .stat-lbl { font-size: 10px; color: var(--dim); margin-top: 1px; }
+
+  /* Search */
+  #search { width: 100%; padding: 8px 10px; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 6px; color: var(--text);
+    font-size: 12px; outline: none; }
+  #search:focus { border-color: var(--accent); }
+  #search::placeholder { color: var(--dim); }
+
+  /* Filters */
+  .filter-row { display: flex; align-items: center; gap: 8px;
+    padding: 4px 0; cursor: pointer; user-select: none; }
+  .filter-row:hover { opacity: 0.9; }
+  .filter-row input { accent-color: var(--accent); cursor: pointer; }
+  .fdot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .flbl { flex: 1; font-size: 12px; }
+  .fcnt { font-size: 11px; color: var(--dim); }
+
+  /* Cluster list */
+  .cluster-list { max-height: 220px; overflow-y: auto; }
+  .cluster-item { display: flex; align-items: center; gap: 6px;
+    padding: 4px 6px; border-radius: 4px; cursor: pointer;
+    font-size: 11px; border: 1px solid transparent; }
+  .cluster-item:hover { background: rgba(255,255,255,0.04); }
+  .cluster-item.active { background: rgba(123,127,255,0.12);
+    border-color: rgba(123,127,255,0.3); }
+  .cdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .clbl { flex: 1; color: var(--text); }
+  .ccnt { color: var(--dim); font-size: 10px; }
+
+  /* Inspector */
+  #inspector { background: var(--panel); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px; display: none; }
+  #inspector.open { display: block; }
+  .insp-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .insp-badge { display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; }
+  .insp-cluster-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .insp-cluster-name { font-size: 10px; color: var(--dim); }
+  .insp-summary { font-size: 13px; font-weight: 500; color: #e4e4ff;
+    line-height: 1.5; margin-bottom: 6px; }
+  .insp-meta { font-size: 11px; color: var(--dim); margin-bottom: 2px; }
+  .insp-text { font-size: 11px; line-height: 1.6; color: var(--text);
+    max-height: 200px; overflow-y: auto; border-top: 1px solid var(--border);
+    padding-top: 8px; margin-top: 8px; white-space: pre-wrap; word-break: break-word; }
+  .insp-text::-webkit-scrollbar { width: 4px; }
+  .insp-text::-webkit-scrollbar-thumb { background: rgba(150,150,200,0.3); }
+  .insp-close { float: right; background: none; border: none; color: var(--dim);
+    cursor: pointer; font-size: 14px; padding: 0 4px; }
+  .insp-close:hover { color: var(--text); }
+
+  .gen-ts { font-size: 10px; color: var(--dim); text-align: center; padding-top: 8px; }
+
+  /* ── 3D View ── */
+  #brain { flex: 1; position: relative; background: var(--bg); }
+  #brain canvas { display: block; }
+
+  /* Controls overlay */
+  #controls { position: absolute; top: 12px; right: 12px; z-index: 5;
+    display: flex; gap: 6px; }
+  .ctrl-btn { background: rgba(14,14,24,0.85); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 10px; color: var(--text); cursor: pointer;
+    font-size: 11px; backdrop-filter: blur(8px); }
+  .ctrl-btn:hover { background: rgba(30,30,50,0.9); border-color: var(--accent); }
+  .ctrl-btn.active { background: rgba(123,127,255,0.15); border-color: var(--accent); }
+
+  /* Legend overlay */
+  #legend { position: absolute; bottom: 16px; left: 16px; z-index: 5;
+    background: rgba(14,14,24,0.85); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; backdrop-filter: blur(8px); }
+  #legend .section-label { margin-bottom: 4px; }
+  .leg-row { display: flex; align-items: center; gap: 6px; font-size: 11px;
+    padding: 2px 0; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* scrollbars */
+  #sidebar-body::-webkit-scrollbar, .cluster-list::-webkit-scrollbar { width: 4px; }
+  #sidebar-body::-webkit-scrollbar-thumb, .cluster-list::-webkit-scrollbar-thumb {
+    background: rgba(150,150,200,0.2); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Sidebar ── -->
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <div class="brand">
+        <span class="brand-icon">🧠</span>
+        <div>
+          <div class="brand-name">Ana's Brain</div>
+          <div class="brand-sub">OpenClaw QMD Knowledge Space</div>
+        </div>
+      </div>
+    </div>
+    <div id="sidebar-body">
+
+      <!-- Stats -->
+      <div>
+        <div class="section-label">Overview</div>
+        <div class="stats">
+          <div class="stat"><div class="stat-val" id="s-chunks">—</div><div class="stat-lbl">Chunks</div></div>
+          <div class="stat"><div class="stat-val" id="s-clusters">—</div><div class="stat-lbl">Clusters</div></div>
+          <div class="stat"><div class="stat-val" id="s-edges">—</div><div class="stat-lbl">Edges</div></div>
+          <div class="stat"><div class="stat-val" id="s-docs">—</div><div class="stat-lbl">Documents</div></div>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div>
+        <div class="section-label">Search</div>
+        <input id="search" type="text" placeholder="Search memories..." autocomplete="off">
+      </div>
+
+      <!-- Source filters -->
+      <div>
+        <div class="section-label">Sources</div>
+        <label class="filter-row"><input type="checkbox" data-src="lesson" checked>
+          <span class="fdot" style="background:#FF6B6B"></span>
+          <span class="flbl">Lessons</span><span class="fcnt" id="fc-lesson">0</span></label>
+        <label class="filter-row"><input type="checkbox" data-src="daily" checked>
+          <span class="fdot" style="background:#45B7D1"></span>
+          <span class="flbl">Daily Notes</span><span class="fcnt" id="fc-daily">0</span></label>
+        <label class="filter-row"><input type="checkbox" data-src="instruction" checked>
+          <span class="fdot" style="background:#96CEB4"></span>
+          <span class="flbl">Instructions</span><span class="fcnt" id="fc-instruction">0</span></label>
+        <label class="filter-row"><input type="checkbox" data-src="session" checked>
+          <span class="fdot" style="background:#9B8EC7"></span>
+          <span class="flbl">Sessions</span><span class="fcnt" id="fc-session">0</span></label>
+      </div>
+
+      <!-- Clusters -->
+      <div>
+        <div class="section-label">Clusters <span style="font-weight:400;color:var(--dim)">(click to focus)</span></div>
+        <div class="cluster-list" id="cluster-list"></div>
+      </div>
+
+      <!-- Inspector -->
+      <div id="inspector">
+        <button class="insp-close" id="insp-close" title="Close">&times;</button>
+        <div class="insp-header">
+          <span class="insp-badge" id="insp-badge"></span>
+          <span class="insp-cluster-dot" id="insp-cdot"></span>
+          <span class="insp-cluster-name" id="insp-cname"></span>
+        </div>
+        <div class="insp-summary" id="insp-summary"></div>
+        <div class="insp-meta" id="insp-file"></div>
+        <div class="insp-meta" id="insp-date"></div>
+        <div class="insp-text" id="insp-text"></div>
+      </div>
+
+      <div class="gen-ts" id="gen-ts"></div>
+    </div>
+  </div>
+
+  <!-- ── 3D View ── -->
+  <div id="brain">
+    <div id="controls">
+      <button class="ctrl-btn" id="btn-reset" title="Reset camera">⟲ Reset</button>
+      <button class="ctrl-btn" id="btn-auto" title="Toggle auto-rotate">↻ Rotate</button>
+    </div>
+    <div id="legend">
+      <div class="section-label">Node Size</div>
+      <div class="leg-row"><span class="leg-dot" style="background:#FF6B6B;width:12px;height:12px"></span> Lesson</div>
+      <div class="leg-row"><span class="leg-dot" style="background:#45B7D1;width:8px;height:8px"></span> Daily / Instruction</div>
+      <div class="leg-row"><span class="leg-dot" style="background:#9B8EC7;width:5px;height:5px"></span> Session</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 3d-force-graph (Three.js wrapper) -->
+<script src="https://unpkg.com/3d-force-graph@1.73.4/dist/3d-force-graph.min.js"></script>
+
+<script>
+// ─── Constants ───────────────────────────────────────────────────────────────
+const SRC_COLOR = {
+  lesson: '#FF6B6B', daily: '#45B7D1', instruction: '#96CEB4', session: '#9B8EC7'
+};
+// nodeVal controls sphere volume — keep these SMALL (val = radius^3 proportional)
+const SRC_SIZE = { lesson: 3.5, daily: 1.5, instruction: 1.5, session: 0.6 };
+const SRC_LABEL = { lesson: 'Lesson', daily: 'Daily', instruction: 'Instruction', session: 'Session' };
+
+// 36 distinct cluster colors (enough for most datasets)
+const PALETTE = [
+  '#FF6B6B','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#F0E68C',
+  '#20B2AA','#FF7F50','#87CEEB','#DA70D6','#32CD32','#FF69B4',
+  '#00CED1','#FFD700','#7B68EE','#00FA9A','#FF4500','#1E90FF',
+  '#FFA07A','#8FBC8F','#9370DB','#F08080','#66CDAA','#BA55D3',
+  '#E6E6FA','#F5DEB3','#B0C4DE','#98FB98','#FFDAB9','#C0C0FF',
+  '#87CEFA','#DEB887','#AFEEEE','#F4A460','#BC8F8F','#7EC8E3',
+];
+
+let DATA = null;
+let graph = null;
+let focusedCluster = null;
+let autoRotate = false;
+let searchQuery = '';
+let srcFilter = { lesson: true, daily: true, instruction: true, session: true };
+let clusterMap = {};  // id -> cluster info
+
+// ─── Load data ───────────────────────────────────────────────────────────────
+async function init() {
+  const resp = await fetch('graph_data.json');
+  DATA = await resp.json();
+
+  // Build cluster lookup
+  DATA.clusters.forEach(c => { clusterMap[c.id] = c; });
+
+  // Stats
+  document.getElementById('s-chunks').textContent = DATA.stats.total_chunks;
+  document.getElementById('s-clusters').textContent = DATA.stats.clusters;
+  document.getElementById('s-edges').textContent = DATA.stats.edges;
+  // Count unique documents
+  const docs = new Set(DATA.nodes.map(n => n.path));
+  document.getElementById('s-docs').textContent = docs.size;
+  document.getElementById('gen-ts').textContent = 'Generated ' + DATA.generated.slice(0, 16).replace('T', ' ');
+
+  // Source counts
+  const srcCounts = {};
+  DATA.nodes.forEach(n => { srcCounts[n.source_type] = (srcCounts[n.source_type]||0) + 1; });
+  Object.keys(srcCounts).forEach(k => {
+    const el = document.getElementById('fc-' + k);
+    if (el) el.textContent = srcCounts[k];
+  });
+
+  buildClusterList();
+  buildGraph();
+}
+
+// ─── Cluster list ────────────────────────────────────────────────────────────
+function clusterColor(cid) {
+  if (cid === -1) return '#555570';
+  return PALETTE[cid % PALETTE.length];
+}
+
+function buildClusterList() {
+  const el = document.getElementById('cluster-list');
+  el.innerHTML = '';
+  const sorted = [...DATA.clusters].sort((a,b) => {
+    if (a.id === -1) return 1;
+    if (b.id === -1) return -1;
+    return b.count - a.count;
+  });
+  sorted.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'cluster-item';
+    div.dataset.cid = c.id;
+    div.innerHTML = `<span class="cdot" style="background:${clusterColor(c.id)}"></span>
+      <span class="clbl">${esc(c.label)}</span>
+      <span class="ccnt">${c.count}</span>`;
+    div.addEventListener('click', () => toggleClusterFocus(c.id, div));
+    el.appendChild(div);
+  });
+}
+
+function toggleClusterFocus(cid, el) {
+  if (focusedCluster === cid) {
+    focusedCluster = null;
+    document.querySelectorAll('.cluster-item').forEach(e => e.classList.remove('active'));
+  } else {
+    focusedCluster = cid;
+    document.querySelectorAll('.cluster-item').forEach(e => e.classList.remove('active'));
+    if (el) el.classList.add('active');
+  }
+  updateVisibility();
+}
+
+// ─── 3D Graph ────────────────────────────────────────────────────────────────
+function buildGraph() {
+  const container = document.getElementById('brain');
+
+  graph = ForceGraph3D()(container)
+    .backgroundColor('#08080f')
+    .showNavInfo(false)
+    // Disable all forces — we use pre-computed UMAP positions
+    .d3Force('charge', null)
+    .d3Force('link', null)
+    .d3Force('center', null)
+    .warmupTicks(0)
+    .cooldownTicks(0)
+    // Disable node dragging — positions are fixed from UMAP
+    .enableNodeDrag(false)
+    // Nodes
+    .nodeVal(n => SRC_SIZE[n.source_type] || 1)
+    .nodeColor(n => nodeColor(n))
+    .nodeOpacity(0.88)
+    .nodeResolution(16)
+    // Edges
+    .linkWidth(0.15)
+    .linkOpacity(0.06)
+    .linkColor(() => 'rgba(150,150,220,0.12)')
+    // Interaction
+    .onNodeClick(n => showInspector(n))
+    .onNodeHover(n => {
+      container.style.cursor = n ? 'pointer' : 'default';
+    })
+    // Tooltip on hover
+    .nodeLabel(n => {
+      const summary = n.summary || n.title;
+      const clr = clusterColor(n.cluster);
+      const cname = clusterMap[n.cluster]?.label || 'unclustered';
+      return `<div style="background:rgba(10,10,20,0.94);padding:6px 10px;border-radius:6px;
+        font-size:11px;color:#d0d0e8;max-width:300px;border:1px solid ${clr}40;
+        line-height:1.5">
+        <div style="color:${clr};font-size:10px;font-weight:600;margin-bottom:3px">${esc(cname)}</div>
+        <div>${esc(summary.slice(0,120))}</div>
+        <div style="color:#666;font-size:10px;margin-top:4px">${n.date} · ${SRC_LABEL[n.source_type] || n.source_type}</div>
+      </div>`;
+    });
+
+  // Set data with fixed positions from UMAP
+  const gData = {
+    nodes: DATA.nodes.map(n => ({
+      ...n,
+      fx: n.x, fy: n.y, fz: n.z,
+    })),
+    links: DATA.edges.map(e => ({
+      source: e.source, target: e.target,
+    }))
+  };
+
+  graph.graphData(gData);
+
+  // Position camera to see the full spread
+  setTimeout(() => {
+    graph.cameraPosition({ x: 180, y: 120, z: 180 }, { x: 0, y: 0, z: 0 }, 1200);
+  }, 100);
+}
+
+function nodeColor(n) {
+  // Search filtering
+  if (searchQuery) {
+    const match = (n.summary || '').toLowerCase().includes(searchQuery) ||
+                  n.title.toLowerCase().includes(searchQuery) ||
+                  n.text.toLowerCase().includes(searchQuery);
+    if (!match) return 'rgba(30,30,50,0.15)';
+  }
+  // Cluster focus
+  if (focusedCluster !== null && n.cluster !== focusedCluster) {
+    return 'rgba(30,30,50,0.12)';
+  }
+  // Source filter
+  if (!srcFilter[n.source_type]) return 'rgba(30,30,50,0.08)';
+
+  // Color by cluster
+  return clusterColor(n.cluster);
+}
+
+function updateVisibility() {
+  if (!graph) return;
+  graph.nodeColor(graph.nodeColor());
+  graph.linkOpacity(focusedCluster !== null ? 0.02 : 0.06);
+}
+
+// ─── Controls ────────────────────────────────────────────────────────────────
+document.getElementById('btn-reset').addEventListener('click', () => {
+  graph.cameraPosition({ x: 180, y: 120, z: 180 }, { x: 0, y: 0, z: 0 }, 800);
+});
+
+document.getElementById('btn-auto').addEventListener('click', function() {
+  autoRotate = !autoRotate;
+  this.classList.toggle('active', autoRotate);
+  if (autoRotate) startAutoRotate();
+});
+
+let rotAngle = 0;
+function startAutoRotate() {
+  if (!autoRotate) return;
+  rotAngle += 0.003;
+  const dist = 220;
+  graph.cameraPosition({
+    x: dist * Math.cos(rotAngle),
+    y: 80 + 40 * Math.sin(rotAngle * 0.3),
+    z: dist * Math.sin(rotAngle),
+  });
+  requestAnimationFrame(startAutoRotate);
+}
+
+// ─── Search ──────────────────────────────────────────────────────────────────
+let searchTimer;
+document.getElementById('search').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    searchQuery = e.target.value.trim().toLowerCase();
+    updateVisibility();
+  }, 200);
+});
+
+// ─── Source filters ──────────────────────────────────────────────────────────
+document.querySelectorAll('.filter-row input').forEach(cb => {
+  cb.addEventListener('change', () => {
+    srcFilter[cb.dataset.src] = cb.checked;
+    updateVisibility();
+  });
+});
+
+// ─── Inspector ───────────────────────────────────────────────────────────────
+function showInspector(n) {
+  const panel = document.getElementById('inspector');
+  const clr = SRC_COLOR[n.source_type] || '#888';
+  const cclr = clusterColor(n.cluster);
+  const cname = clusterMap[n.cluster]?.label || 'unclustered';
+
+  const badge = document.getElementById('insp-badge');
+  badge.textContent = SRC_LABEL[n.source_type] || n.source_type;
+  badge.style.background = clr + '22';
+  badge.style.color = clr;
+
+  document.getElementById('insp-cdot').style.background = cclr;
+  document.getElementById('insp-cname').textContent = cname;
+  document.getElementById('insp-summary').textContent = n.summary || n.title;
+  document.getElementById('insp-file').textContent = '\u{1F4C1} ' + n.path;
+  document.getElementById('insp-date').textContent = '\u{1F4C5} ' + n.date;
+  document.getElementById('insp-text').textContent = n.text || '(no content)';
+  panel.classList.add('open');
+}
+
+document.getElementById('insp-close').addEventListener('click', () => {
+  document.getElementById('inspector').classList.remove('open');
+});
+
+function esc(s) { return s.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ─── Go ──────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
