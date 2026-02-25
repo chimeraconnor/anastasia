@@ -252,3 +252,46 @@ SID="${SPEAKER_ID:-1}"  # Changed from 6
   - Access to any public repo, private repos you have explicit access to
 
 **Rule:** Always use `--with-token` method. Don't waste time on device code links — they don't work reliably in this environment.
+
+## Vercel Deployment Skill (2026-02-25)
+
+**Location:** `~/.openclaw/workspace/skills/vercel-deploy/`
+
+Complete workflow for deploying websites to Vercel with GitHub integration.
+
+### Token Storage
+- File: `.env.vercel` (workspace root)
+- Format: `VERCEL_TOKEN=vcp_...`
+- Load: `export $(cat .env.vercel | xargs)`
+
+### Available Scripts
+All in `skills/vercel-deploy/scripts/`:
+- `create-vercel-project.sh <name> <owner/repo> [framework]` - Create Vercel project
+- `deploy.sh <name> <owner/repo> [repo-id] [target]` - Deploy project
+- `make-public.sh <project-id>` - Remove SSO protection
+
+### Quick Usage
+```bash
+cd ~/.openclaw/workspace/skills/vercel-deploy
+
+# Create project
+./scripts/create-vercel-project.sh my-site chimeraconnor/my-site nextjs
+
+# Deploy (need repo ID from GitHub API or previous project creation)
+./scripts/deploy.sh my-site chimeraconnor/my-site 123456789 production
+
+# Make public
+PROJECT_ID=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" https://api.vercel.com/v9/projects/my-site | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
+./scripts/make-public.sh $PROJECT_ID
+```
+
+### API Endpoints
+- `POST /v9/projects` - Create project
+- `POST /v13/deployments` - Trigger deployment  
+- `GET /v13/deployments/{id}` - Check status
+- `PATCH /v9/projects/{id}` - Update settings (e.g., remove SSO)
+
+### Frameworks Supported
+Next.js, React, Vue, Nuxt, Svelte, Angular, Remix, Astro, and many more.
+
+See full API docs: `skills/vercel-deploy/references/api.md`

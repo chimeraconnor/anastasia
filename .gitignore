@@ -27,3 +27,4 @@ youtube-transcript-*.md
 # Logs and temporary files
 logs/
 openclaw.json
+.env.vercel
