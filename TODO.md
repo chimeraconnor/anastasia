@@ -1,12 +1,19 @@
-# TODO.md - Tasks & Action Items
-
-## Current Tasks
-
-### Configure GitHub ⬜
-- **Added:** 2026-02-24
-- **Priority:** Unknown
-- **Details:** Need to configure GitHub
+# TODO - Tasks for Anastasia & Mr. Grey
 
 ---
 
-*This file tracks ongoing tasks. Completed items can be marked with ✅ or moved to a completed section.*
+## 📋 General Todos
+
+| Priority | Task | Added | Notes |
+|----------|------|-------|-------|
+| High | Give Anastasia Vercel access | 2026-02-25 | Setup Vercel project access |
+
+---
+
+## 💡 Ideas to Consider
+
+*Add ideas here for future reference*
+
+---
+
+**Last Updated:** 2026-02-25
