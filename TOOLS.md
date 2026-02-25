@@ -94,7 +94,7 @@ python3 ~/.openclaw/workspace/skills/discord-voice/scripts/send_voice.py \
 ```
 
 **Requirements:**
-- `python3`, `ffmpeg`, `ffprobe` (all installed on host)
+- `python3`, `ffmpeg`, `ffprobe` (all installed in Docker container)
 - Discord bot token (auto-read from OpenClaw config)
 
 **Features:**
@@ -154,6 +154,11 @@ python3 ~/.openclaw/workspace/skills/discord-voice/scripts/send_voice.py \
 - **Host path** (`/root/.openclaw/workspace/`) is OUTSIDE the container
 - **Container path** (`/home/node/.openclaw/workspace/`) is INSIDE the container
 - Environment variable `OPENCLAW_WORKSPACE_DIR` shows the host path for reference, but use container path for operations
+
+**Installed tools in Docker container:**
+- `ffmpeg` 5.1.8 - audio/video conversion
+- `ffprobe` 5.1.8 - media file inspection
+- `python3` - for Discord voice skill and other Python scripts
 
 ## Sherpa-ONNX TTS
 
