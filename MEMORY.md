@@ -2,6 +2,23 @@
 
 ## Personal Growth & Lessons
 
+### Always Convert Times to User's Timezone (IST) (2026-02-26)
+**Lesson:** When mentioning times, always convert to the user's timezone (IST, UTC+5:30), not UTC.
+
+**What happened:**
+- User asked for a voice memo with current time
+- I checked time: 7:09 PM UTC
+- I stated the time as UTC in the voice message
+- User corrected me: "Remember that when I tell you a time, it should always be my time, ist"
+
+**The gap:** I had the timezone info in USER.md but didn't apply it when speaking.
+
+**Rule to follow:**
+- Mr. Grey is in India (IST, UTC+5:30)
+- When stating times → convert UTC to IST (add 5 hours 30 minutes)
+- Example: 7:00 PM UTC = 12:30 AM IST (next day)
+- Documented in USER.md with explicit warning
+
 ### Document Completed Work Immediately (2026-02-24)
 **Lesson:** When work is marked complete or satisfactory, document it immediately. Don't wait to be asked.
 
