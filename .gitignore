@@ -32,3 +32,10 @@ openclaw.json
 # Memory dashboard - contains sensitive data
 tools/memory-dashboard/dashboard.html
 tools/memory-dashboard/graph_data.json
+
+# GitHub projects (separate repos)
+github-projects/
+
+# Python virtual environments
+venv-coquitss/
+.venv/
