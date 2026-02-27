@@ -30,6 +30,10 @@
 - **Use GLM-4.7-FlashX for:** Simple data fetching, parsing, formatting, quick lookups, summarization
 - **Use GLM-4.7 for:** Complex multi-step workflows, planning, nuanced decisions, coding/debugging tricky issues
 - **Both share same token bucket** — match model to task complexity
+- **Discord channels:** Use glm-4.7, not k2p5 (kimi-coding)
+  - k2p5 has rate limits → causes 5-10 minute delays
+  - glm-4.7 has no rate limits → faster, more reliable
+  - If Discord uses k2p5, switch to glm-4.7 in config
 
 ## SearXNG Web Search
 
@@ -79,7 +83,7 @@ Sends audio files as native Discord voice messages with waveform visualization. 
 **Usage (Preferred Method):**
 ```bash
 python3 ~/.openclaw/workspace/skills/discord-voice/scripts/send_voice.py \
-  --channel-id 1475190772830568682 \
+  --channel-id 1476287721277493269 \
   --audio-file /path/to/audio.wav \
   --verbose
 ```
@@ -134,6 +138,61 @@ python3 ~/.openclaw/workspace/skills/discord-voice/scripts/send_voice.py \
 
 **Key lesson:** Don't confuse "voice call" (phone) with "voice note" (audio file). They're completely different systems.
 
+## TTS (Text-to-Speech) - Anastasia's Voice System
+
+**Primary Skill:** `~/.openclaw/workspace/skills/anastasia-tts/`
+
+**Default:** Pocket TTS with `azelma` voice (sounds like Anastasia)
+
+### Quick Usage
+
+```bash
+# Default voice (Pocket/azelma)
+~/.openclaw/workspace/skills/anastasia-tts/scripts/anastasia-speak.py "Hello, I'm Anastasia."
+
+# Send to Discord automatically
+~/.openclaw/workspace/skills/anastasia-tts/scripts/anastasia-speak.py "Hello" \
+    --platform discord --channel-id 1476357999952920626
+
+# Alternative voices
+~/.openclaw/workspace/skills/anastasia-tts/scripts/anastasia-speak.py "Hello" \
+    --engine kitten --voice Bella --speed 1.3
+```
+
+### Engine Options
+
+| Engine | Default Voice | Speed Control | Best For |
+|--------|--------------|---------------|----------|
+| `pocket` | azelma | No | **Default** - Fast (2.1x RT) |
+| `kitten` | Bella | Yes (0.8-1.5) | Higher quality, slower |
+| `kokoro` | af_bella | Yes | Backup option |
+
+### Female Voices (Anastasia-like)
+- **pocket:** `azelma` (default), `fantine`, `cosette`, `eponine`
+- **kitten:** `Bella`, `Luna`, `Rosie`, `Kiki`
+- **kokoro:** `af_bella` (speaker 1)
+
+### Legacy Tools (organized by engine)
+
+**Location:** `/home/node/.openclaw/workspace/tools/tts/`
+
+```
+tts/
+├── kokoro/     # Sherpa-ONNX Kokoro TTS
+├── kitten/     # KittenTTS mini-0.8 scripts
+└── pocket/     # PocketTTS scripts
+```
+
+**For direct engine access without the skill wrapper:**
+```bash
+# KittenTTS
+/home/node/.openclaw/workspace/tts-py312/bin/python \
+    ~/.openclaw/workspace/tools/tts/kitten/kitten-speak.py "Hello" output.wav Bella 1.3
+
+# PocketTTS
+python3 ~/.openclaw/workspace/tools/tts/pocket/pocket-speak.py "Hello" output.wav azelma
+```
+
 ## Docker/VPS Setup Note (2026-02-22)
 
 **Volume Mapping:**
@@ -159,6 +218,16 @@ python3 ~/.openclaw/workspace/skills/discord-voice/scripts/send_voice.py \
 - `ffmpeg` 5.1.8 - audio/video conversion
 - `ffprobe` 5.1.8 - media file inspection
 - `python3` - for Discord voice skill and other Python scripts
+
+**Disk Monitoring (2026-02-26)**
+- **Monitor disk space regularly** — full disk causes crashes and prevents writes
+- **Check usage with:** `df -h`
+- **Clean large directories:**
+  - `workspace/moshi-tts`, `workspace/CosyVoice` - TTS models (can be removed if not in use)
+  - `/home/node/.cache` - uv cache (8GB), HuggingFace models (4.7GB)
+  - `/home/node/.local/lib` - duplicate Python packages
+- **Clean uv cache:** `uv cache clean` (frees ~8GB)
+- **Rule:** When disk approaches 90%, clean up before it hits 100%
 
 ## Sherpa-ONNX TTS
 
@@ -300,3 +369,81 @@ PROJECT_ID=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" https://api.vercel
 Next.js, React, Vue, Nuxt, Svelte, Angular, Remix, Astro, and many more.
 
 See full API docs: `skills/vercel-deploy/references/api.md`
+
+## Memory Dashboard (2026-02-27)
+
+**Location:** `tools/memory-dashboard/`
+
+Interactive 3D visualization of Anastasia's knowledge base — memory, lessons, skills, and sessions clustered by semantic similarity.
+
+### What It Does
+
+The dashboard visualizes Anastasia's brain by:
+- **Scanning workspace files** — MEMORY.md, skills/, sessions, identity files
+- **Splitting into semantic sections** — Each `##`/`###` header becomes one brain node
+- **Computing embeddings** — Hybrid approach using QMD's deep learning embeddings + TF-IDF fallback
+- **3D projection** — UMAP reduces 768-dim vectors to 3D coordinates
+- **Clustering** — OPTICS groups related concepts automatically
+- **Auto-labeling** — Human-readable cluster names (e.g., "discord / config / openclaw")
+- **Semantic edges** — Lines connect similar ideas (cosine similarity ≥ 0.45)
+
+### Quick Commands
+
+**Build brain data:**
+```bash
+cd /home/node/.openclaw/workspace/tools/memory-dashboard
+python3 build_graph.py
+```
+
+**Serve visualization:**
+```bash
+python3 -m http.server 9090 --bind 0.0.0.0
+```
+
+**Access via Tailscale:**
+```
+http://koc-server.tailc2d84b.ts.net:9090/brain.html
+```
+
+### How It Works
+
+**Data Pipeline:**
+1. **Scan** — Read all MD files from workspace (MEMORY.md, skills/, sessions/)
+2. **Chunk** — Split files by `##` and `###` headers
+3. **Embed** — Match chunks to QMD's Gemma 300M embeddings (768-dim), fallback to TF-IDF
+4. **Project** — UMAP 3D projection preserves semantic relationships
+5. **Cluster** — OPTICS density-based clustering groups related concepts
+6. **Label** — Analyze cluster content, generate 2-4 word human labels
+7. **Edge** — KNN connects each node to 3 most similar neighbors
+
+**Automation:**
+- **Cron 1:** "Rebuild brain data" — 11:30 PM UTC nightly
+- **Cron 2:** "Label brain clusters" — 12:05 AM UTC (35 min after build)
+- Together: Fresh brain data every night with readable cluster labels
+
+### Output Files
+
+| File | Purpose |
+|-------|----------|
+| `graph_data.json` | Latest snapshot (335 nodes, 72 clusters) |
+| `brain.html` | 3D interactive visualization (Three.js) |
+| `snapshots/YYYY-MM-DD.json` | Daily archives for history view |
+
+### Dashboard Features
+
+- **3D visualization** — Rotate, zoom, pan through brain
+- **Hover** — Preview memory chunk content
+- **Click** — Inspect full text, metadata
+- **Search** — Filter by title or content
+- **Filter by type** — Lesson, daily, skill, session
+- **Cluster view** — See which concepts group together
+- **History** — Compare snapshots over time
+
+### Why This Matters
+
+This lets Anastasia **see patterns** she wouldn't notice reading text files:
+- Timezone lessons cluster together → Should remember this better
+- Discord config issues form a group → Recurring technical theme
+- Morning greeting patterns emerge → Daily ritual visualization
+
+It's her brain, externalized. 🥀
