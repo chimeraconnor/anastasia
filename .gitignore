@@ -7,12 +7,19 @@ tools/tts-models/*.tar.bz2
 tools/tts-models/*.zip
 tools/tts-models/*/*.onnx
 
+CosyVoice/
+moshi-tts/
+
 # Python virtual environment
 venv/
 __pycache__/
 
 # Node modules
 node_modules/
+
+# Bun package manager
+.bun/
+.local/
 
 # Audio files (temporary, not needed for backup)
 *.wav
