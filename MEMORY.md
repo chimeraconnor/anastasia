@@ -77,20 +77,40 @@
 - Ensured consistency throughout the file
 - Committed fix with clear documentation of the mistake
 
-### Research Before Making Assumptions (2026-02-22)
-**Lesson:** Never assume features exist without verification. Always check documentation and research first.
+### QMD Setup for Docker Environments (2026-02-27)
+**Lesson:** Setting up QMD in Docker requires persistent workspace paths, not system paths. The models symlink commonly breaks and needs explicit fixing.
 
 **What happened:**
-- Created heartbeat-state.json for state tracking without verifying OpenClaw supports it
-- Assumed OpenClaw heartbeats provide state persistence between runs
-- Reality: Heartbeats are independent cycles with no built-in state tracking
-- User caught the assumption: "well you're sure openclaw supports heatbeats.json?"
+- User reported QMD broke after Docker restart
+- Investigated QMD installation and configuration
+- Found multiple issues: broken symlink to `/home/node/.cache/qmd/models` (doesn't exist), missing QMD binary, no bun in PATH
+- Installed bun to workspace (`~/.openclaw/workspace/.bun/`) for persistence
+- Installed QMD globally with tsx dependency
+- Fixed models symlink to point to `~/.bun/install/cache` (QMD's actual cache)
+- Created wrapper script at `~/.local/bin/qmd` that sets up XDG environment automatically
+- Created `qmd-setup` skill to document this knowledge
+
+**QMD Installation Summary:**
+- Bun: `~/.openclaw/workspace/.bun/bin/bun` (persists in Docker)
+- QMD: `~/.local/bin/qmd` (wrapper script, persists)
+- Models cache: `~/.bun/install/cache/` (auto-downloads Gemma 300M)
+- Config: `~/.openclaw/agents/main/qmd/xdg-config/qmd/index.yml` (persists)
 
 **Rule to follow:**
-- Check `/app/docs/` for documentation before adding custom features
-- Research with SearXNG if docs are unclear
-- Verify assumptions before implementing
-- Distinguish between standard features vs. custom additions
+- **Use workspace paths, not system paths** - `~/.openclaw/workspace/` and `~/.bun/` persist across Docker restarts; `/usr/local` and `~/.npm` do not
+- **Fix models symlink explicitly** - The symlink at `~/.openclaw/agents/main/qmd/xdg-cache/qmd/models` commonly breaks and points to non-existent directory
+- **Create wrapper scripts** - Essential for setting up environment variables (XDG_CONFIG_HOME, XDG_CACHE_HOME)
+- **Ask user before long installations** - QMD setup takes ~10 minutes, should warn user and confirm first
+- **QMD is local-first** - Uses node-llama-cpp (Gemma 300M) with no API keys, runs completely offline
+
+**QMD commands reference:**
+- `qmd query <text>` - Hybrid search (BM25 + vectors + reranking) - recommended
+- `qmd search <text>` - Full-text BM25 keywords
+- `qmd vsearch <text>` - Vector similarity only
+- `qmd collection list` - See indexed collections
+- `qmd get <file>` - Show a single document
+
+**Skill created:** `skills/qmd-setup/` - Complete documentation for QMD setup in Docker
 
 ### Make Automation Explicit and Algorithmic (2026-02-22)
 **Lesson:** When automating workflows (cron, subagents), make decision criteria explicit. Don't rely on human judgment.
