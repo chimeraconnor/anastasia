@@ -1,0 +1,40 @@
+{
+  "channels": {
+    "discord": {
+      "voice": {
+        "enabled": true,
+        "tts": {
+          "provider": "openai",
+          "openai": {
+            "baseUrl": "http://localhost:3456",
+            "apiKey": "local",
+            "voice": "alloy"
+          }
+        }
+      }
+    }
+  }
+}
+
+/*
+ * OpenClaw Configuration for Local TTS Server
+ * ===================================================
+ *
+ * This config makes Discord voice use your local TTS server
+ * instead of OpenAI's cloud TTS.
+ *
+ * To apply:
+ *   1. Copy the "channels.discord.voice" section to your config
+ *   2. Run: openclaw gateway restart
+ *
+ * What this does:
+ *   - Discord voice sends TTS requests to http://localhost:3456
+ *   - Local server uses Pocket TTS with azelma voice
+ *   - No OpenAI API calls, no costs
+ *
+ * Testing:
+ *   1. Start local TTS server: cd local-tts-server && npm start
+ *   2. Test health: curl http://localhost:3456/health
+ *   3. Join a Discord voice channel: /vc join
+ *   4. Speak - you should hear Anastasia's voice (azelma)
+ */

@@ -1,0 +1,17 @@
+{
+  "name": "local-tts-server",
+  "version": "1.0.0",
+  "description": "OpenAI-compatible TTS API server using local Pocket TTS",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "curl -X POST http://localhost:3456/v1/audio/speech -H \"Content-Type: application/json\" -d '{\"model\":\"tts-1\",\"input\":\"Hello from Anastasia\",\"voice\":\"alloy\",\"response_format\":\"mp3\"}' --output test.mp3"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
