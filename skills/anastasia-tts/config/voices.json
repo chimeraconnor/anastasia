@@ -1,0 +1,101 @@
+{
+  "default_engine": "pocket",
+  "default_voice": {
+    "pocket": "azelma",
+    "kitten": "Bella",
+    "kokoro": "af_bella"
+  },
+  "voices": {
+    "pocket": {
+      "azelma": {
+        "description": "Default voice - sounds most like Anastasia",
+        "language": "English",
+        "gender": "female"
+      },
+      "fantine": {
+        "description": "French female, elegant",
+        "language": "English",
+        "gender": "female"
+      },
+      "cosette": {
+        "description": "French female, young",
+        "language": "English",
+        "gender": "female"
+      },
+      "eponine": {
+        "description": "French female, mature",
+        "language": "English",
+        "gender": "female"
+      }
+    },
+    "kitten": {
+      "Bella": {
+        "description": "High quality female, speed 1.3 recommended",
+        "language": "English",
+        "gender": "female",
+        "default_speed": 1.3
+      },
+      "Luna": {
+        "description": "Female, soft",
+        "language": "English",
+        "gender": "female",
+        "default_speed": 1.2
+      },
+      "Rosie": {
+        "description": "Female, energetic",
+        "language": "English",
+        "gender": "female",
+        "default_speed": 1.4
+      },
+      "Kiki": {
+        "description": "Female, cheerful",
+        "language": "English",
+        "gender": "female",
+        "default_speed": 1.3
+      }
+    },
+    "kokoro": {
+      "af_bella": {
+        "description": "American female, soft and younger - Anastasia-like",
+        "language": "English",
+        "gender": "female",
+        "speaker_id": 1
+      },
+      "af_nicole": {
+        "description": "American female, clear and articulate",
+        "language": "English",
+        "gender": "female",
+        "speaker_id": 6
+      },
+      "am_adam": {
+        "description": "American male, standard",
+        "language": "English",
+        "gender": "male",
+        "speaker_id": 10
+      },
+      "bf_emma": {
+        "description": "British female, elegant and refined",
+        "language": "English",
+        "gender": "female",
+        "speaker_id": 20
+      },
+      "bm_george": {
+        "description": "British male, standard",
+        "language": "English",
+        "gender": "male",
+        "speaker_id": 30
+      }
+    }
+  },
+  "anastasia_preferred": {
+    "engine": "pocket",
+    "voice": "azelma",
+    "reason": "Sounds most like Anastasia - sweet tone with subtle vulnerability"
+  },
+  "alternative_preferred": {
+    "engine": "kitten",
+    "voice": "Bella",
+    "speed": 1.3,
+    "reason": "Higher quality when needed, though slower"
+  }
+}
